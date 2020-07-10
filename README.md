@@ -119,3 +119,8 @@ In case you want to use legacy GeoIP binary databases you should use [maxmind@0.
 ## License
 
 MIT
+
+
+## Contributing
+
+add a link
