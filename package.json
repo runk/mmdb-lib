@@ -1,0 +1,62 @@
+{
+  "name": "mmdb-lib",
+  "version": "0.0.0-development",
+  "homepage": "https://github.com/runk/mmdb-lib",
+  "description": "Maxmind DB (MMDB) Library",
+  "keywords": [
+    "maxmind",
+    "mmdb",
+    "geo",
+    "geoip",
+    "geoip2"
+  ],
+  "author": "Dmitry Shirokov <deadrunk@gmail.com>",
+  "contributors": [
+    "Thomas Birke @quafzi <quafzi@netextreme.de>",
+    "Afzaal Ameer @afzaalace",
+    "Andrew N Golovkov @AndorCS",
+    "Gregory Oschwald @oschwald"
+  ],
+  "dependencies": {
+    "tiny-lru": "7.0.2"
+  },
+  "devDependencies": {
+    "@types/ip-address": "5.8.2",
+    "@types/jest": "25.1.4",
+    "@types/node": "10.17.5",
+    "@types/sinon": "7.5.2",
+    "ip-address": "6.2.0",
+    "jest": "25.2.3",
+    "semantic-release": "17.0.4",
+    "sinon": "9.0.1",
+    "ts-jest": "25.2.1",
+    "tslint": "6.1.0",
+    "typescript": "^3.9.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/runk/mmdb-lib.git"
+  },
+  "bugs": {
+    "mail": "deadrunk@gmail.com",
+    "url": "http://github.com/runk/mmdb-lib/issues"
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "engines": {
+    "node": ">=10",
+    "npm": ">=6"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf lib/* && tsc",
+    "lint": "eslint --ext .ts",
+    "lint:types": "tsc --noEmit",
+    "test": "jest",
+    "prepublish": "npm run build",
+    "semantic-release": "semantic-release"
+  }
+}

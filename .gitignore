@@ -1,0 +1,8 @@
+testing.js
+node_modules
+.DS_Store
+coverage
+npm-debug.log
+.nyc_output
+lib
+package-lock.json
