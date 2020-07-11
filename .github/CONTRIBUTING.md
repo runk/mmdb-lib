@@ -17,4 +17,3 @@ which you can find useful:
 - `npm test --coverage` runs code coverage task and generates a report
 
 One pull request per one feature, nothing unusual.
-
