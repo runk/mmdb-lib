@@ -26,18 +26,6 @@ export default class Reader<T extends Response> {
     this.ipv4StartNodeNumber = this.ipv4Start();
   }
 
-  public load(db: Buffer, opts: ReaderOptions = {}) {
-    this.db = db;
-    this.metadata = parseMetadata(this.db);
-    this.decoder = new Decoder(
-      this.db,
-      this.metadata.searchTreeSize + DATA_SECTION_SEPARATOR_SIZE,
-      opts.cache
-    );
-    this.walker = walker(this.db, this.metadata.recordSize);
-    this.ipv4StartNodeNumber = this.ipv4Start();
-  }
-
   public get(ipAddress: string): T | null {
     const [data] = this.getWithPrefixLength(ipAddress);
     return data;
