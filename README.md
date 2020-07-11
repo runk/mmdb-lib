@@ -1,60 +1,27 @@
-# node-maxmind [![Build Status](https://api.travis-ci.org/runk/node-maxmind.svg?branch=master)](https://travis-ci.org/runk/node-maxmind)
+# mmdb-lib [![Build Status](https://api.travis-ci.org/runk/node-maxmind.svg?branch=master)](https://travis-ci.org/runk/node-maxmind)
 
-Javascript module for Geo IP lookup using Maxmind binary databases (aka mmdb or geoip2).
-Fastest Maxmind lookup library available - up to [17,000% faster](https://github.com/runk/node-maxmind-benchmark) than other libraries. Module has 100% test coverage with comprehensive test suite. It natively works with binary Maxmind database format and doesn't require any "CSV - {specific lib format}" conversions as some other modules do. Maxmind binary databases are highly optimized for size and performance so there's no point using other formats.
+Javascript library for working with Maxmind binary databases (aka mmdb or geoip2).
 
-## GEO databases
-
-You might want to use [geolite2](https://github.com/runk/node-geolite2) module with free geo databases. Alternatively, free databases available for [download here](http://dev.maxmind.com/geoip/geoip2/geolite2/). If you need better accuracy you should consider buying [commercial subscription](https://www.maxmind.com/en/geoip2-databases).
+Library is designed to be agnostic to environment and works equally well in node.js and browser. Module is fully compatible with IPv6. There are no differences in API between IPv4 and IPv6.
 
 ## Installation
 
 ```shell
-npm i maxmind
+npm i mmdb-lib
 ```
 
 ## Usage
 
-### JavaScript
-
-```javascript
-const maxmind = require('maxmind');
-
-maxmind.open('/path/to/GeoLite2-City.mmdb').then((lookup) => {
-  console.log(lookup.get('66.6.44.4'));
-
-  console.log(lookup.getWithPrefixLength('66.6.44.4'));
-});
-
-maxmind.open('/path/to/GeoOrg.mmdb').then((lookup) => {
-  console.log(lookup.get('66.6.44.4'));
-
-  console.log(lookup.getWithPrefixLength('66.6.44.4'));
-});
-```
-
-### TypeScript
-
 ```typescript
-import maxmind, { CityResponse } from 'maxmind';
+import fs from 'fs';
+import Reader from 'mmdb-lib';
 
-const lookup = await maxmind.open<CityResponse>('/path/to/GeoLite2-City.mmdb');
-console.log(lookup.get('66.6.44.4')); // inferred type maxmind.CityResponse
+// Get a buffer with mmdb database, from file system or whereever.
+const db = fs.readFileSync('/path/to/GeoLite2-City.mmdb');
 
-console.log(lookup.getWithPrefixLength('66.6.44.4')); // tuple with inferred type [maxmind.CityResponse|null, number]
-```
-
-### Sync API
-
-You can use `Reader` class directly, if you would want to instantiate it in non-async fashion. Use cases would include receiving a buffer database over network, or just reading it synchronously from disk.
-
-```typescript
-import { Reader } from 'maxmind';
-const buffer = fs.readFileSync('./db.mmdb');
-const lookup = new Reader<CityResponse>(buffer);
-const city = lookup.get('8.8.8.8');
-
-const [city2, prefixLength] = lookup.getWithPrefixLength('66.6.44.4');
+const reader = new Reader<CityResponse>(db);
+console.log(reader.get('66.6.44.4')); // inferred type `CityResponse`
+console.log(reader.getWithPrefixLength('66.6.44.4')); // tuple with inferred type `[CityResponse|null, number]`
 ```
 
 Supported response types:
@@ -69,42 +36,16 @@ Supported response types:
 - IspResponse
 ```
 
-## V6 Support
+## Usage in browser-like environments
 
-Module is fully compatible with IPv6. There are no differences in API between IPv4 and IPv6.
-
-```javascript
-const lookup = await maxmind.open('/path/to/GeoLite2.mmdb');
-const location = lookup.get('2001:4860:0:1001::3004:ef68');
-```
+Library expects to receive an instance of `Buffer` during instantiation of `Reader`. Since there is no direct alternative of node's `Buffer` in browser, you can use https://github.com/feross/buffer that mimics native `Buffer` interface. Neither `ArrayBuffer` nor `Uint8Array` is supported right now.
 
 ## Options
 
-_maxmind.open(filepath, [options])_
+_Reader(db:Buffer, [options])_
 
-- `filepath`: `<string>` Path to the binary mmdb database file.
 - `options`: `<Object>`
-  - `cache`: `<Object>` Cache options. Under the bonnet module uses [tiny-lru](https://github.com/avoidwork/tiny-lru) cache.
-    - `max`: `<number>` Max cache items to keep in memory. _Default_: `6000`.
-  - `watchForUpdates`: `<boolean>` Supports reloading the reader when changes occur to the database that is loaded. _Default_: `false`.
-  - `watchForUpdatesNonPersistent`: `<boolean>` Controlls wether the watcher should be persistent or not. If it is persistent, a node process will be blocked in watching state if the watcher is the only thing still running in the program. _Default_: `false`.
-  - `watchForUpdatesHook`: `<Function>` Hook function that is fired on database update. _Default_: `null`.
-
-## IP addresses validation
-
-Module supports validation for both IPv4 and IPv6:
-
-```javascript
-maxmind.validate('66.6.44.4'); // returns true
-maxmind.validate('66.6.44.boom!'); // returns false
-
-maxmind.validate('2001:4860:0:1001::3004:ef68'); // returns true
-maxmind.validate('2001:4860:0:1001::3004:boom!'); // returns false
-```
-
-## GeoIP Legacy binary format
-
-In case you want to use legacy GeoIP binary databases you should use [maxmind@0.6](https://github.com/runk/node-maxmind/releases/tag/v0.6.0).
+  - `cache`: `<Object>` Cache helper. [tiny-lru](https://github.com/avoidwork/tiny-lru) is great basic option. Only two methods expected: `get(key: string | number): any` and `set(key: string | number, val: any): void`.
 
 ## References
 
@@ -119,7 +60,6 @@ In case you want to use legacy GeoIP binary databases you should use [maxmind@0.
 ## License
 
 MIT
-
 
 ## Contributing
 
