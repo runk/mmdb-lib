@@ -1,8 +1,6 @@
 import assert from 'assert';
-// @ts-ignore
-import lru from 'tiny-lru';
-import { OpenOpts } from '.';
 import utils from './utils';
+import { Cache } from './types';
 
 assert(
   typeof BigInt !== 'undefined',
@@ -10,16 +8,16 @@ assert(
 );
 
 enum DataType {
-  Extended =  0,
-  Pointer =  1,
-  Utf8String =  2,
-  Double =  3,
-  Bytes =  4,
-  Uint16 =  5,
-  Uint32 =  6,
-  Map =  7,
-  Int32 =  8,
-  Uint64 =  9,
+  Extended = 0,
+  Pointer = 1,
+  Utf8String = 2,
+  Double = 3,
+  Bytes = 4,
+  Uint16 = 5,
+  Uint32 = 6,
+  Map = 7,
+  Int32 = 8,
+  Uint64 = 9,
   Uint128 = 10,
   Array = 11,
   Container = 12,
@@ -35,9 +33,9 @@ interface Cursor {
   offset: number;
 }
 
-interface Cache {
-  get(key: string | number): any;
-  set(key: string | number, value: any): any;
+const noCache: Cache = {
+  get: () => undefined,
+  set: () => undefined
 }
 
 const cursor = (value: any, offset: number): Cursor => ({ value, offset });
@@ -48,13 +46,10 @@ export default class Decoder {
   private baseOffset: number;
   private cache: Cache;
 
-  constructor(db: Buffer, baseOffset: number = 0, opts?: OpenOpts) {
-    assert((this.db = db), 'File stream is required');
+  constructor(db: Buffer, baseOffset: number = 0, cache: Cache = noCache) {
+    assert((this.db = db), 'Database buffer is required');
     this.baseOffset = baseOffset;
-
-    this.cache = lru(
-      opts && opts.cache && opts.cache.max ? opts.cache.max : 6000
-    );
+    this.cache = cache;
   }
 
   public decode(offset: number): any {
@@ -176,11 +171,11 @@ export default class Decoder {
     // type specifying bytes as a single unsigned integer*.
     return cursor(
       65821 +
-        utils.concat3(
-          this.db[offset],
-          this.db[offset + 1],
-          this.db[offset + 2]
-        ),
+      utils.concat3(
+        this.db[offset],
+        this.db[offset + 1],
+        this.db[offset + 2]
+      ),
       offset + 3
     );
   }

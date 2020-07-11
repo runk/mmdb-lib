@@ -1,160 +1,168 @@
 import assert from 'assert';
+import fs from 'fs';
 import path from 'path';
-import sinon, { SinonSpy } from 'sinon';
-import fs from './fs';
-import maxmind from './index';
-import { CityResponse } from './reader/response';
+import Reader from '.';
 
-const nah = () => Promise.reject(new Error('Should not happen'));
-
-describe('index', () => {
+describe('reader', () => {
   const dataDir = path.join(__dirname, '../test/data/test-data');
-  const dbPath = path.join(dataDir, 'GeoIP2-City-Test.mmdb');
+  const read = (dir: string, filepath: string): Buffer =>
+    fs.readFileSync(path.join(dir, filepath))
 
-  let sandbox: sinon.SinonSandbox;
-  let watchHandler: () => void;
-  beforeEach(() => {
-    sandbox = sinon.createSandbox();
-    // @ts-ignore
-    sandbox.stub(fs, 'watch').callsFake((paramA, paramB, cb) => {
-      watchHandler = cb;
-    });
-    sandbox.spy(fs, 'readFile');
-    sandbox.spy(fs, 'readFileSync');
-  });
-  afterEach(() => {
-    sandbox.restore();
-  });
-
-  describe('validate()', () => {
-    it('should work fine for both IPv4 and IPv6', () => {
-      assert.strictEqual(maxmind.validate('64.4.4.4'), true);
-      assert.strictEqual(maxmind.validate('2001:4860:0:1001::3004:ef68'), true);
-      assert.strictEqual(maxmind.validate('whhaaaazza'), false);
-    });
-  });
-
-  describe('init()', () => {
-    it('should fail when someone tries to use legacy api', () => {
-      assert.throws(() => {
-        maxmind.init();
-      }, /Maxmind v2 module has changed API/);
-    });
-  });
-
-  describe('open()', () => {
-    it('should work with most basic usage', async () => {
-      const lookup = await maxmind.open<CityResponse>(dbPath);
-      assert(lookup.get('2001:230::'));
+  describe('findAddressInTree()', () => {
+    it('should work for most basic case', () => {
+      const reader: any = new Reader(read(dataDir, 'GeoIP2-City-Test.mmdb'));
+      assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [null, 8]);
     });
 
-    it('should successfully handle database, with opts', async () => {
-      const options = { cache: { max: 1000 }, watchForUpdates: true };
-      const lookup = await maxmind.open(dbPath, options);
-      assert(lookup.get('2001:230::'));
-      assert((fs.watch as SinonSpy).calledOnce);
-      assert((fs.readFile as SinonSpy).calledOnce);
-    });
+    type treeRecord = [number | null, number];
 
-    it('should work with auto updates', async () => {
-      const options = { watchForUpdates: true };
-      const lookup = await maxmind.open(dbPath, options);
-      assert(lookup.get('2001:230::'));
-      assert((fs.watch as SinonSpy).calledOnce);
-      assert((fs.readFile as SinonSpy).calledOnce);
-      watchHandler();
-      assert((fs.readFile as SinonSpy).calledTwice);
-    });
-
-    it('should work with auto updates and call specified hook', async () => {
-      const hook = sinon.spy();
-      const options = {
-        watchForUpdates: true,
-        watchForUpdatesHook: hook,
-        watchForUpdatesNonPersistent: false,
-      };
-      const lookup = await maxmind.open(dbPath, options);
-      assert(lookup.get('2001:230::'));
-      assert(hook.notCalled);
-      await watchHandler();
-      assert(hook.calledOnce);
-    });
-
-    it('should successfully handle errors while opening a db', async () => {
-      await maxmind
-        .open('/foo/bar')
-        .then(nah)
-        .catch((err) => assert.strictEqual(err.code, 'ENOENT'));
-    });
-
-    it('should throw an error when callback provided', async () => {
-      await maxmind
-        .open(dbPath, {}, () => true)
-        .then(nah)
-        .catch((err) =>
-          assert(/Maxmind v2 module has changed API/.test(err.message))
-        );
-    });
-
-    it('should return an error when gzip file attempted', async () => {
-      const badPath = path.join(
-        __dirname,
-        '../test/databases/GeoIP2-City-Test.mmdb.gz'
+    it('should return correct value: city database', () => {
+      const reader: any = new Reader(read(dataDir, 'GeoIP2-City-Test.mmdb'));
+      assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [null, 8]);
+      assert.deepStrictEqual(reader.findAddressInTree('175.16.199.1'), [
+        3383,
+        24,
+      ]);
+      assert.deepStrictEqual(reader.findAddressInTree('175.16.199.88'), [
+        3383,
+        24,
+      ]);
+      assert.deepStrictEqual(reader.findAddressInTree('175.16.199.255'), [
+        3383,
+        24,
+      ]);
+      assert.deepStrictEqual(reader.findAddressInTree('::175.16.199.255'), [
+        3383,
+        120,
+      ]);
+      assert.deepStrictEqual(
+        reader.findAddressInTree('::ffff:175.16.199.255'),
+        [3383, 120]
       );
-      await maxmind
-        .open(badPath)
-        .then(nah)
-        .catch((err) =>
-          assert.strictEqual(
-            err.message,
-            'Looks like you are passing in a file in gzip format, please use mmdb database instead.'
-          )
-        );
+      assert.deepStrictEqual(reader.findAddressInTree('2a02:cf40:ffff::'), [
+        5114,
+        29,
+      ]);
+      assert.deepStrictEqual(reader.findAddressInTree('2a02:cf47:0000::'), [
+        5114,
+        29,
+      ]);
+      assert.deepStrictEqual(
+        reader.findAddressInTree('2a02:cf47:0000:fff0:ffff::'),
+        [5114, 29]
+      );
+      assert.deepStrictEqual(reader.findAddressInTree('2a02:cf48:0000::'), [
+        null,
+        29,
+      ]);
     });
 
-    // it('should check for an error when cannot read database on update', async () => {
-    //   var counter = 0;
-    //   var cb = function(err, reader) {
-    //     // Indeed couter is kinda gross.
-    //     switch (counter++) {
-    //       case 0:
-    //         assert.strictEqual(err, null);
-    //         assert(reader instanceof Reader);
-    //         assert(fs.readFile.calledOnce);
-    //         fs.readFile.restore();
-    //         sandbox.stub(fs, 'readFile').callsFake(function(path, cb) {
-    //           cb(new Error('Crazy shit'));
-    //         });
-    //         watchHandler();
-    //         break;
+    it('should return correct value: string entries', () => {
+      const reader: any = new Reader(
+        read(dataDir, 'MaxMind-DB-string-value-entries.mmdb')
+      );
+      assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [225, 32]);
+      assert.deepStrictEqual(reader.findAddressInTree('1.1.1.2'), [214, 31]);
+      assert.deepStrictEqual(reader.findAddressInTree('175.2.1.1'), [null, 7]);
+    });
 
-    //       case 1:
-    //         assert.strictEqual(err.message, 'Crazy shit');
-    //         done();
-    //         break;
+    describe('various record sizes and ip versions', () => {
+      const ips: Record<string, Record<string, treeRecord>> = {
+        v4: {
+          '1.1.1.1': [229, 32],
+          '1.1.1.2': [217, 31],
+          '1.1.1.32': [241, 32],
+          '1.1.1.33': [null, 32],
+        },
+        v6: {
+          '::1:ffff:fffa': [null, 126],
+          '::1:ffff:ffff': [432, 128],
+          '::2:0000:0000': [450, 122],
+          '::2:0000:0060': [null, 123],
+        },
+        mix: {
+          '1.1.1.1': [518, 32],
+          '1.1.1.2': [504, 31],
+          '1.1.1.32': [532, 32],
+          '1.1.1.33': [null, 32],
+          '::1:ffff:fffa': [null, 126],
+          '::1:ffff:ffff': [547, 128],
+          '::2:0000:0000': [565, 122],
+          '::2:0000:0060': [null, 123],
+        },
+      };
 
-    //       default:
-    //         done(new Error('Only two calls should happen'));
-    //     }
-    //   };
-    //   await maxmind.open(dbPath, { watchForUpdates: true }, cb);
-    // });
+      interface Scenarios {
+        [key: string]: Record<string, treeRecord>;
+      }
 
-    it('should handle reader errors', async () => {
-      await maxmind
-        .open(path.join(__dirname, '../test/databases/broken.dat'), {})
-        .then(nah)
-        .catch((err) => {
-          assert(/Cannot parse binary database/.test(err.message));
+      const scenarios: Scenarios = {
+        'MaxMind-DB-test-ipv4-24.mmdb': ips.v4,
+        'MaxMind-DB-test-ipv4-28.mmdb': ips.v4,
+        'MaxMind-DB-test-ipv4-32.mmdb': ips.v4,
+        'MaxMind-DB-test-ipv6-24.mmdb': ips.v6,
+        'MaxMind-DB-test-ipv6-28.mmdb': ips.v6,
+        'MaxMind-DB-test-ipv6-32.mmdb': ips.v6,
+        'MaxMind-DB-test-mixed-24.mmdb': ips.mix,
+        'MaxMind-DB-test-mixed-28.mmdb': ips.mix,
+        'MaxMind-DB-test-mixed-32.mmdb': ips.mix,
+      };
+
+      for (const item in scenarios) {
+        it('should return correct value: ' + item, () => {
+          const reader: any = new Reader(read(dataDir, '' + item));
+          const list = scenarios[item];
+          for (const ip in list) {
+            assert.deepStrictEqual(
+              reader.findAddressInTree(ip),
+              list[ip],
+              'IP: ' + ip
+            );
+          }
         });
+      }
     });
-  });
 
-  describe('openSync()', () => {
-    it('should successfully handle database', () => {
-      assert.throws(() => {
-        maxmind.openSync();
-      }, /Maxmind v2 module has changed API/);
+    describe('broken files and search trees', () => {
+      it('should behave fine when there is no  ipv4 search tree', () => {
+        const reader: any = new Reader(
+          read(dataDir, 'MaxMind-DB-no-ipv4-search-tree.mmdb')
+        );
+        assert.deepStrictEqual(reader.findAddressInTree('::1:ffff:ffff'), [
+          80,
+          64,
+        ]);
+        assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [80, 0]);
+      });
+
+      it('should behave fine when search tree is broken', () => {
+        // TODO: find out in what way the file is broken
+        const reader: any = new Reader(
+          read(dataDir, 'MaxMind-DB-test-broken-search-tree-24.mmdb')
+        );
+        assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [229, 32]);
+        assert.deepStrictEqual(reader.findAddressInTree('1.1.1.2'), [217, 31]);
+      });
+    });
+
+    describe('invalid database format', () => {
+      it('should provide meaningful message when one tries to use legacy db', () => {
+        assert.throws(() => {
+          // tslint:disable-next-line: no-unused-expression
+          new Reader(
+            read(path.join(__dirname, '../test/databases'), 'legacy.dat')
+          );
+        }, /Maxmind v2 module has changed API/);
+      });
+
+      it('should provide meaningful message when one tries to use unknown format', () => {
+        assert.throws(() => {
+          // tslint:disable-next-line: no-unused-expression
+          new Reader(
+            read(path.join(__dirname, '../test/databases'), 'broken.dat')
+          );
+        }, /Cannot parse binary database/);
+      });
     });
   });
 });
