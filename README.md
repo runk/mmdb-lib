@@ -38,7 +38,7 @@ Supported response types:
 
 ## Usage in browser-like environments
 
-Library expects to receive an instance of `Buffer` during instantiation of `Reader`. Since there is no direct alternative of node's `Buffer` in browser, you can use https://github.com/feross/buffer that mimics native `Buffer` interface. Neither `ArrayBuffer` nor `Uint8Array` is supported right now.
+Library expects to receive an instance of `Buffer` during instantiation of `Reader`. Since there is no direct alternative of node's `Buffer` in browser, you can use https://github.com/feross/buffer that mimics native `Buffer` interface. Neither `ArrayBuffer` nor `Uint8Array` is supported right now. Another requirement is [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) object available.
 
 ## Options
 
