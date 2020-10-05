@@ -13,7 +13,7 @@ export interface Metadata {
   readonly buildEpoch: Date;
   readonly databaseType: string;
   readonly languages: string[];
-  readonly description: any;
+  readonly description: string;
   readonly ipVersion: number;
   readonly nodeCount: number;
   readonly recordSize: number;

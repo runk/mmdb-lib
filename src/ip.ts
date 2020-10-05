@@ -12,22 +12,23 @@ const parseIPv4 = (input: string): number[] => {
 };
 
 const hex = (v: string): string => {
-  v = parseInt(v, 10).toString(16);
-  return v.length === 2 ? v : '0' + v;
+  const h = parseInt(v, 10).toString(16);
+  return h.length === 2 ? h : '0' + h;
 };
 
-const parseIPv6 = (ip: string): number[] => {
+const parseIPv6 = (input: string): number[] => {
   const addr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   let i;
   let parsed;
   let chunk;
 
   // ipv4 e.g. `::ffff:64.17.254.216`
-  if (ip.indexOf('.') > -1) {
-    ip = ip.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, (match, a, b, c, d) => {
-      return hex(a) + hex(b) + ':' + hex(c) + hex(d);
-    });
-  }
+  const ip =
+    input.indexOf('.') > -1
+      ? input.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, (match, a, b, c, d) => {
+          return hex(a) + hex(b) + ':' + hex(c) + hex(d);
+        })
+      : input;
 
   const [left, right] = ip.split('::', 2);
 

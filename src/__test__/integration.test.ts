@@ -10,7 +10,7 @@ const dataDir = path.join(__dirname, '../../test/data/test-data');
 const srcDir = path.join(__dirname, '../../test/data/source-data');
 
 const actual = (file: string) => {
-  const data = require(path.join(srcDir, file));
+  const data = JSON.parse(fs.readFileSync(path.join(srcDir, file), 'utf8'));
   const hash: Record<string, any> = {};
   data.forEach((item: any) => {
     for (const key in item) {
@@ -31,7 +31,6 @@ const actual = (file: string) => {
 const open = <T = Response>(filepath: string, cache?: Cache): Reader<T> =>
   new Reader<T>(fs.readFileSync(filepath), { cache });
 
-
 describe('mmdb lib', () => {
   describe('basic functionality', () => {
     it('should successfully handle database', async () => {
@@ -39,9 +38,7 @@ describe('mmdb lib', () => {
     });
 
     it('should fetch geo ip', async () => {
-      const geoIp = open(
-        path.join(dataDir, 'GeoIP2-City-Test.mmdb')
-      );
+      const geoIp = open(path.join(dataDir, 'GeoIP2-City-Test.mmdb'));
       const data = actual('GeoIP2-City-Test.json');
       assert.deepStrictEqual(geoIp.get('1.1.1.1'), null);
 
@@ -73,38 +70,41 @@ describe('mmdb lib', () => {
 
     it('should accept cache options', async () => {
       const cache = { set: jest.fn(), get: jest.fn() };
-      const reader = open(path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb'), cache);
+      const reader = open(
+        path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb'),
+        cache
+      );
       reader.get('0.0.0.0');
-      assert.deepEqual(cache.set.mock.calls, [[
-        2572,
-        {
-          offset: 2687,
-          value: {
-            array: [],
-            boolean: false,
-            bytes: Buffer.from([]),
-            double: 0,
-            float: 0,
-            int32: 0,
-            map: {},
-            uint128: 0,
-            uint16: 0,
-            uint32: 0,
-            uint64: 0,
-            utf8_string: '',
-          }
-        }]]
-      )
-      assert.deepEqual(cache.get.mock.calls, [[2572]])
+      assert.deepEqual(cache.set.mock.calls, [
+        [
+          2572,
+          {
+            offset: 2687,
+            value: {
+              array: [],
+              boolean: false,
+              bytes: Buffer.from([]),
+              double: 0,
+              float: 0,
+              int32: 0,
+              map: {},
+              uint128: 0,
+              uint16: 0,
+              uint32: 0,
+              uint64: 0,
+              utf8_string: '',
+            },
+          },
+        ],
+      ]);
+      assert.deepEqual(cache.get.mock.calls, [[2572]]);
     });
   });
 });
 
 describe('section: data', () => {
   it('should decode all possible types - complex', async () => {
-    const geoIp = open(
-      path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb')
-    );
+    const geoIp = open(path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb'));
     assert.deepStrictEqual(geoIp.get('::1.1.1.1'), {
       array: [1, 2, 3],
       boolean: true,
@@ -123,9 +123,7 @@ describe('section: data', () => {
   });
 
   it('should decode all possible types - zero/empty values', async () => {
-    const geoIp = open(
-      path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb')
-    );
+    const geoIp = open(path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb'));
     assert.deepStrictEqual(geoIp.get('::0.0.0.0'), {
       array: [],
       boolean: false,
@@ -196,9 +194,7 @@ describe('section: binary search tree', () => {
 
   files.forEach((file) => {
     it('should test everything: ' + file, async () => {
-      const geoIp = open<Response>(
-        path.join(dataDir, '/' + file + '.mmdb')
-      );
+      const geoIp = open<Response>(path.join(dataDir, '/' + file + '.mmdb'));
       const data = actual(file + '.json');
       tester(geoIp, data);
     });

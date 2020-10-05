@@ -35,8 +35,8 @@ interface Cursor {
 
 const noCache: Cache = {
   get: () => undefined,
-  set: () => undefined
-}
+  set: () => undefined,
+};
 
 const cursor = (value: any, offset: number): Cursor => ({ value, offset });
 
@@ -46,13 +46,13 @@ export default class Decoder {
   private baseOffset: number;
   private cache: Cache;
 
-  constructor(db: Buffer, baseOffset: number = 0, cache: Cache = noCache) {
+  constructor(db: Buffer, baseOffset = 0, cache: Cache = noCache) {
     assert((this.db = db), 'Database buffer is required');
     this.baseOffset = baseOffset;
     this.cache = cache;
   }
 
-  public decode(offset: number): any {
+  public decode(offset: number): Cursor {
     let tmp: any;
     const ctrlByte = this.db[offset++];
     let type = ctrlByte >> 5;
