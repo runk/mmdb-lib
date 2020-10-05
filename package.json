@@ -18,12 +18,15 @@
     "@types/jest": "26.0.4",
     "@types/node": "10.17.5",
     "@types/sinon": "7.5.2",
+    "@typescript-eslint/eslint-plugin": "^4.4.0",
+    "@typescript-eslint/parser": "^4.4.0",
+    "eslint": "^7.10.0",
     "ip-address": "6.2.0",
     "jest": "26.1.0",
+    "prettier": "^2.1.2",
     "semantic-release": "17.1.1",
     "sinon": "9.0.1",
     "ts-jest": "26.1.1",
-    "tslint": "6.1.0",
     "typescript": "3.9.6"
   },
   "repository": {
@@ -46,9 +49,10 @@
   "license": "MIT",
   "scripts": {
     "build": "rm -rf lib/* && tsc",
-    "lint": "echo 'skipping...'",
+    "lint": "eslint . --ext .ts",
     "lint:types": "tsc --noEmit",
     "test": "jest",
+    "format": "prettier --write src",
     "prepublish": "npm run build",
     "semantic-release": "semantic-release"
   }

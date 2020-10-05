@@ -4,5 +4,5 @@ export interface Cache {
 }
 
 export interface ReaderOptions {
-  cache?: Cache
+  cache?: Cache;
 }
