@@ -107,3 +107,5 @@ export default class Reader<T extends Response> {
     return pointer;
   }
 }
+
+export * from './reader/response';
