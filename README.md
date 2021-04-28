@@ -1,4 +1,4 @@
-# mmdb-lib [![Build Status](https://api.travis-ci.org/runk/node-maxmind.svg?branch=master)](https://travis-ci.org/runk/node-maxmind)
+# mmdb-lib
 
 Javascript library for working with Maxmind binary databases (aka mmdb or geoip2).
 
