@@ -13,14 +13,20 @@ export default class Reader<T extends Response> {
   private db: Buffer;
   private ipv4StartNodeNumber: number;
   private walker: Walker;
+  private opts: ReaderOptions;
 
   constructor(db: Buffer, opts: ReaderOptions = {}) {
+    this.opts = opts;
+    this.load(db);
+  }
+
+  public load(db: Buffer) {
     this.db = db;
     this.metadata = parseMetadata(this.db);
     this.decoder = new Decoder(
       this.db,
       this.metadata.searchTreeSize + DATA_SECTION_SEPARATOR_SIZE,
-      opts.cache
+      this.opts.cache
     );
     this.walker = walker(this.db, this.metadata.recordSize);
     this.ipv4StartNodeNumber = this.ipv4Start();

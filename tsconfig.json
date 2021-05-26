@@ -14,6 +14,7 @@
     "removeComments": true,
     "sourceMap": true,
     "strict": true,
+    "strictPropertyInitialization": false,
     "lib": ["ES2019"],
     "target": "ES2019"
   },
