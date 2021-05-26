@@ -307,3 +307,18 @@ describe('getWithPrefixLength', () => {
     });
   }
 });
+
+describe('database reload', () => {
+  it('works as expected', () => {
+    const geoIp = open(path.join(dataDir, 'GeoIP2-ISP-Test.mmdb'));
+    const data = actual('GeoIP2-ISP-Test.json');
+
+    const address = '175.16.199.1';
+    assert.deepStrictEqual(geoIp.get(address), null);
+
+    const newDatabase = fs.readFileSync(path.join(dataDir, 'GeoIP2-City-Test.mmdb'))
+    geoIp.load(newDatabase);
+
+    assert.notDeepStrictEqual(geoIp.get(address), null);
+  })
+});
