@@ -171,11 +171,11 @@ export default class Decoder {
     // type specifying bytes as a single unsigned integer*.
     return cursor(
       65821 +
-      utils.concat3(
-        this.db[offset],
-        this.db[offset + 1],
-        this.db[offset + 2]
-      ),
+        utils.concat3(
+          this.db[offset],
+          this.db[offset + 1],
+          this.db[offset + 2]
+        ),
       offset + 3
     );
   }
