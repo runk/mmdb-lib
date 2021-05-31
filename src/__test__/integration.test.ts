@@ -316,9 +316,11 @@ describe('database reload', () => {
     const address = '175.16.199.1';
     assert.deepStrictEqual(geoIp.get(address), null);
 
-    const newDatabase = fs.readFileSync(path.join(dataDir, 'GeoIP2-City-Test.mmdb'))
+    const newDatabase = fs.readFileSync(
+      path.join(dataDir, 'GeoIP2-City-Test.mmdb')
+    );
     geoIp.load(newDatabase);
 
     assert.notDeepStrictEqual(geoIp.get(address), null);
-  })
+  });
 });

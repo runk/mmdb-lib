@@ -21,6 +21,11 @@ export default class Reader<T extends Response> {
   }
 
   public load(db: Buffer) {
+    if (!Buffer.isBuffer(db)) {
+      throw new Error(
+        `mmdb-lib expects an instance of Buffer, got: ${typeof db}`
+      );
+    }
     this.db = db;
     this.metadata = parseMetadata(this.db);
     this.decoder = new Decoder(

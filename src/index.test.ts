@@ -18,34 +18,34 @@ describe('findAddressInTree()', () => {
   it('should return correct value: city database', () => {
     const reader: any = new Reader(read(dataDir, 'GeoIP2-City-Test.mmdb'));
     assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [null, 8]);
-    assert.deepStrictEqual(reader.findAddressInTree('175.16.199.1'), [
-      3383,
-      24,
-    ]);
-    assert.deepStrictEqual(reader.findAddressInTree('175.16.199.88'), [
-      3383,
-      24,
-    ]);
-    assert.deepStrictEqual(reader.findAddressInTree('175.16.199.255'), [
-      3383,
-      24,
-    ]);
-    assert.deepStrictEqual(reader.findAddressInTree('::175.16.199.255'), [
-      3383,
-      120,
-    ]);
+    assert.deepStrictEqual(
+      reader.findAddressInTree('175.16.199.1'),
+      [3383, 24]
+    );
+    assert.deepStrictEqual(
+      reader.findAddressInTree('175.16.199.88'),
+      [3383, 24]
+    );
+    assert.deepStrictEqual(
+      reader.findAddressInTree('175.16.199.255'),
+      [3383, 24]
+    );
+    assert.deepStrictEqual(
+      reader.findAddressInTree('::175.16.199.255'),
+      [3383, 120]
+    );
     assert.deepStrictEqual(
       reader.findAddressInTree('::ffff:175.16.199.255'),
       [3383, 120]
     );
-    assert.deepStrictEqual(reader.findAddressInTree('2a02:cf40:ffff::'), [
-      5114,
-      29,
-    ]);
-    assert.deepStrictEqual(reader.findAddressInTree('2a02:cf47:0000::'), [
-      5114,
-      29,
-    ]);
+    assert.deepStrictEqual(
+      reader.findAddressInTree('2a02:cf40:ffff::'),
+      [5114, 29]
+    );
+    assert.deepStrictEqual(
+      reader.findAddressInTree('2a02:cf47:0000::'),
+      [5114, 29]
+    );
     assert.deepStrictEqual(
       reader.findAddressInTree('2a02:cf47:0000:fff0:ffff::'),
       [5114, 29]
@@ -127,10 +127,10 @@ describe('findAddressInTree()', () => {
       const reader: any = new Reader(
         read(dataDir, 'MaxMind-DB-no-ipv4-search-tree.mmdb')
       );
-      assert.deepStrictEqual(reader.findAddressInTree('::1:ffff:ffff'), [
-        80,
-        64,
-      ]);
+      assert.deepStrictEqual(
+        reader.findAddressInTree('::1:ffff:ffff'),
+        [80, 64]
+      );
       assert.deepStrictEqual(reader.findAddressInTree('1.1.1.1'), [80, 0]);
     });
 
