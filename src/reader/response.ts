@@ -73,6 +73,8 @@ interface TraitsRecord {
   readonly is_satellite_provider?: boolean;
   readonly is_tor_exit_node?: boolean;
   readonly isp?: string;
+  readonly mobile_country_code?: string;
+  readonly mobile_network_code?: string;
   readonly organization?: string;
   readonly user_type?:
     | 'business'
@@ -136,6 +138,8 @@ export interface DomainResponse {
 
 export interface IspResponse extends AsnResponse {
   readonly isp: string;
+  readonly mobile_country_code?: string;
+  readonly mobile_network_code?: string;
   readonly organization: string;
 }
 
