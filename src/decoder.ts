@@ -313,11 +313,7 @@ export default class Decoder {
   }
 
   private decodeString(offset: number, size: number) {
-    // @ts-ignore
-    return this.db.utf8Slice(offset, offset + size);
-
-    // A little slower:
-    // return this.db.toString('utf8', offset, offset + size);
+    return this.db.toString('utf8', offset, offset + size);
   }
 
   private decodeBigUint(offset: number, size: number) {
