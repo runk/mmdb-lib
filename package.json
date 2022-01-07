@@ -39,11 +39,9 @@
     "url": "http://github.com/runk/mmdb-lib/issues"
   },
   "files": [
-    "lib-commonjs",
-    "lib-esm"
+    "lib"
   ],
-  "main": "lib-commonjs/index.js",
-  "module": "lib-esm/index.js",
+  "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "engines": {
     "node": ">=10",
@@ -55,6 +53,7 @@
     "lint": "eslint . --ext .ts",
     "lint:types": "tsc --noEmit",
     "test": "jest",
+    "test-imports": "node test/imports/commonjs.js && node test/imports/esm.mjs",
     "format": "prettier --write src",
     "prepublish": "npm run build",
     "semantic-release": "semantic-release"

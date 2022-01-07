@@ -325,8 +325,7 @@ export default class Decoder {
     const numberOfLongs = size / 4;
     for (let i = 0; i < numberOfLongs; i++) {
       integer =
-        integer * BigInt(4294967296) +
-        BigInt(buffer.readUInt32BE(i << 2));
+        integer * BigInt(4294967296) + BigInt(buffer.readUInt32BE(i << 2));
     }
 
     return integer.toString();
