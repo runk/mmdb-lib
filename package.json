@@ -39,9 +39,11 @@
     "url": "http://github.com/runk/mmdb-lib/issues"
   },
   "files": [
-    "lib"
+    "lib-commonjs",
+    "lib-esm"
   ],
-  "main": "lib/index.js",
+  "main": "lib-commonjs/index.js",
+  "module": "lib-esm/index.js",
   "typings": "lib/index.d.ts",
   "engines": {
     "node": ">=10",

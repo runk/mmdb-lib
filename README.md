@@ -14,12 +14,12 @@ npm i mmdb-lib
 
 ```typescript
 import fs from 'fs';
-import Reader from 'mmdb-lib';
+import * as mmdb from 'mmdb-lib';
 
 // Get a buffer with mmdb database, from file system or whereever.
 const db = fs.readFileSync('/path/to/GeoLite2-City.mmdb');
 
-const reader = new Reader<CityResponse>(db);
+const reader = new mmdb.Reader<CityResponse>(db);
 console.log(reader.get('66.6.44.4')); // inferred type `CityResponse`
 console.log(reader.getWithPrefixLength('66.6.44.4')); // tuple with inferred type `[CityResponse|null, number]`
 ```

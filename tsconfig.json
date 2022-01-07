@@ -1,21 +1,14 @@
 {
   "compilerOptions": {
-    "allowJs": false,
-    "declaration": true,
-    "diagnostics": true,
-    "esModuleInterop": true,
-    "extendedDiagnostics": true,
-    "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2019"],
-    "listEmittedFiles": true,
+    "lib": ["es2021"],
     "module": "commonjs",
-    "outDir": "lib",
-    "removeComments": true,
-    "rootDir": "src",
-    "sourceMap": true,
+    "target": "es2021",
+    "outDir": "lib-commonjs",
+
     "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
-    "target": "ES2019"
   },
   "exclude": [
     "node_modules",

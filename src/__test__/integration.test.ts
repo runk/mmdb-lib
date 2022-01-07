@@ -2,7 +2,7 @@ import fs from 'fs';
 import assert from 'assert';
 import ipAddr from 'ip-address';
 import path from 'path';
-import Reader from '../';
+import { Reader } from '../';
 import { Cache } from '../types';
 import { Response } from '../reader/response';
 
