@@ -40,12 +40,12 @@ const readNodeRight28 =
 const readNodeLeft32 =
   (db: Buffer): NodeReader =>
   (offset: number): number =>
-    db.readUInt32BE(offset, true);
+    db.readUInt32BE(offset);
 
 const readNodeRight32 =
   (db: Buffer): NodeReader =>
   (offset: number): number =>
-    db.readUInt32BE(offset + 4, true);
+    db.readUInt32BE(offset + 4);
 
 export default (db: Buffer, recordSize: number): Walker => {
   switch (recordSize) {

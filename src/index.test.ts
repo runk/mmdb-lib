@@ -1,7 +1,7 @@
 import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
-import Reader from '.';
+import { Reader } from '.';
 
 const dataDir = path.join(__dirname, '../test/data/test-data');
 const read = (dir: string, filepath: string): Buffer =>

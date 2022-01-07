@@ -163,7 +163,7 @@ export default class Decoder {
     // If the value is 30, then the size is 285 + *the next two bytes after the type
     // specifying bytes as a single unsigned integer*.
     if (size === 30) {
-      return cursor(285 + this.db.readUInt16BE(offset, false), offset + 2);
+      return cursor(285 + this.db.readUInt16BE(offset), offset + 2);
     }
 
     // At this point `size` is always 31.
@@ -227,7 +227,7 @@ export default class Decoder {
       // bytes as a 32-bit value. In this case, the last three bits of the control byte
       // are ignored.
     } else {
-      packed = this.db.readUInt32BE(offset, true);
+      packed = this.db.readUInt32BE(offset);
     }
 
     offset += pointerSize + 1;
@@ -252,11 +252,11 @@ export default class Decoder {
   }
 
   private decodeDouble(offset: number) {
-    return this.db.readDoubleBE(offset, true);
+    return this.db.readDoubleBE(offset);
   }
 
   private decodeFloat(offset: number) {
-    return this.db.readFloatBE(offset, true);
+    return this.db.readFloatBE(offset);
   }
 
   private decodeMap(size: number, offset: number) {
@@ -280,7 +280,7 @@ export default class Decoder {
     if (size === 0) {
       return 0;
     }
-    return this.db.readInt32BE(offset, true);
+    return this.db.readInt32BE(offset);
   }
 
   private decodeUint(offset: number, size: number) {
@@ -325,8 +325,7 @@ export default class Decoder {
     const numberOfLongs = size / 4;
     for (let i = 0; i < numberOfLongs; i++) {
       integer =
-        integer * BigInt(4294967296) +
-        BigInt(buffer.readUInt32BE(i << 2, true));
+        integer * BigInt(4294967296) + BigInt(buffer.readUInt32BE(i << 2));
     }
 
     return integer.toString();

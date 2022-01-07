@@ -7,7 +7,7 @@ import { ReaderOptions } from './types';
 
 const DATA_SECTION_SEPARATOR_SIZE = 16;
 
-export default class Reader<T extends Response> {
+export class Reader<T extends Response> {
   public metadata: Metadata;
   private decoder: Decoder;
   private db: Buffer;

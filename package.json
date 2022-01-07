@@ -11,23 +11,24 @@
     "geoip2"
   ],
   "author": "Dmitry Shirokov <deadrunk@gmail.com>",
-  "contributors": [],
-  "dependencies": {},
+  "contributors": [
+    "William Storey @horgh"
+  ],
   "devDependencies": {
     "@types/ip-address": "5.8.2",
-    "@types/jest": "26.0.4",
-    "@types/node": "10.17.5",
+    "@types/jest": "27.0.0",
+    "@types/node": "16.0.0",
     "@types/sinon": "7.5.2",
     "@typescript-eslint/eslint-plugin": "^4.4.0",
     "@typescript-eslint/parser": "^4.4.0",
     "eslint": "^7.10.0",
     "ip-address": "6.2.0",
-    "jest": "26.1.0",
+    "jest": "^27.4.7",
     "prettier": "^2.1.2",
-    "semantic-release": "17.1.1",
+    "semantic-release": "^18.0.1",
     "sinon": "9.0.1",
-    "ts-jest": "26.1.1",
-    "typescript": "3.9.6"
+    "ts-jest": "^27.1.2",
+    "typescript": "4.5.4"
   },
   "repository": {
     "type": "git",
@@ -52,6 +53,7 @@
     "lint": "eslint . --ext .ts",
     "lint:types": "tsc --noEmit",
     "test": "jest",
+    "test-imports": "node test/imports/commonjs.js && node test/imports/esm.mjs",
     "format": "prettier --write src",
     "prepublish": "npm run build",
     "semantic-release": "semantic-release"
