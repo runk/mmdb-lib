@@ -1,21 +1,20 @@
 {
   "compilerOptions": {
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "lib",
-    "rootDir": "src",
     "allowJs": false,
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "diagnostics": true,
     "esModuleInterop": true,
     "extendedDiagnostics": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2019"],
     "listEmittedFiles": true,
     "module": "commonjs",
+    "outDir": "lib",
     "removeComments": true,
+    "rootDir": "src",
     "sourceMap": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "lib": ["ES2019"],
     "target": "ES2019"
   },
   "exclude": [
