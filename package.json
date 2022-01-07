@@ -28,6 +28,7 @@
     "semantic-release": "^18.0.1",
     "sinon": "9.0.1",
     "ts-jest": "^27.1.2",
+    "ts-node": "^10.4.0",
     "typescript": "4.5.4"
   },
   "repository": {
@@ -53,7 +54,7 @@
     "lint": "eslint . --ext .ts",
     "lint:types": "tsc --noEmit",
     "test": "jest",
-    "test-imports": "node test/imports/commonjs.js && node test/imports/esm.mjs",
+    "test-imports": "node test/imports/commonjs.js && node test/imports/esm.mjs && ts-node test/imports/typescript.ts",
     "format": "prettier --write src",
     "prepublish": "npm run build",
     "semantic-release": "semantic-release"
