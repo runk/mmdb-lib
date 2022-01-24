@@ -313,7 +313,7 @@ export default class Decoder {
   }
 
   private decodeString(offset: number, size: number) {
-    return this.db.toString('utf8', offset, offset + size);
+    return this.db.slice(offset, offset + size).toString();
   }
 
   private decodeBigUint(offset: number, size: number) {
