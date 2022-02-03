@@ -12,7 +12,8 @@
   ],
   "author": "Dmitry Shirokov <deadrunk@gmail.com>",
   "contributors": [
-    "William Storey @horgh"
+    "William Storey @horgh",
+    "Uman Shahzad @UmanShahzad"
   ],
   "devDependencies": {
     "@types/ip-address": "5.8.2",
