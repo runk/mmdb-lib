@@ -26,7 +26,7 @@
     "ip-address": "6.2.0",
     "jest": "^27.4.7",
     "prettier": "^2.1.2",
-    "semantic-release": "^18.0.1",
+    "semantic-release": "^19.0.0",
     "sinon": "9.0.1",
     "ts-jest": "^27.1.2",
     "ts-node": "^10.4.0",
