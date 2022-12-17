@@ -2,6 +2,7 @@ import fs from 'fs';
 import assert from 'assert';
 import ipAddr from 'ip-address';
 import path from 'path';
+import sinon from 'sinon';
 import { Reader } from '../';
 import { Cache } from '../types';
 import { Response } from '../reader/response';
@@ -69,35 +70,36 @@ describe('mmdb lib', () => {
     });
 
     it('should accept cache options', async () => {
-      const cache = { set: jest.fn(), get: jest.fn() };
+      const cache = { set: sinon.spy(), get: sinon.spy() };
       const reader = open(
         path.join(dataDir, 'MaxMind-DB-test-decoder.mmdb'),
         cache
       );
       reader.get('0.0.0.0');
-      assert.deepEqual(cache.set.mock.calls, [
-        [
-          2572,
-          {
-            offset: 2687,
-            value: {
-              array: [],
-              boolean: false,
-              bytes: Buffer.from([]),
-              double: 0,
-              float: 0,
-              int32: 0,
-              map: {},
-              uint128: 0,
-              uint16: 0,
-              uint32: 0,
-              uint64: 0,
-              utf8_string: '',
-            },
+
+      assert(cache.set.calledOnce);
+      assert.deepEqual(cache.set.firstCall.args, [
+        2572,
+        {
+          offset: 2687,
+          value: {
+            array: [],
+            boolean: false,
+            bytes: Buffer.from([]),
+            double: 0,
+            float: 0,
+            int32: 0,
+            map: {},
+            uint128: 0,
+            uint16: 0,
+            uint32: 0,
+            uint64: 0,
+            utf8_string: '',
           },
-        ],
+        },
       ]);
-      assert.deepEqual(cache.get.mock.calls, [[2572]]);
+      assert(cache.set.calledOnce);
+      assert.deepEqual(cache.get.firstCall.args, [2572]);
     });
   });
 });
