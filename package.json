@@ -23,7 +23,7 @@
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.0",
-    "ip-address": "6.4.0",
+    "ip-address": "8.1.0",
     "mocha": "^10.2.0",
     "prettier": "^2.1.2",
     "semantic-release": "^19.0.0",
