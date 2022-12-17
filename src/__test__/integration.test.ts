@@ -29,7 +29,7 @@ const actual = (file: string) => {
   };
 };
 
-const open = <T = Response>(filepath: string, cache?: Cache): Reader<T> =>
+const open = <T extends Response>(filepath: string, cache?: Cache): Reader<T> =>
   new Reader<T>(fs.readFileSync(filepath), { cache });
 
 describe('mmdb lib', () => {
