@@ -1,6 +1,6 @@
 import fs from 'fs';
 import assert from 'assert';
-import ipAddr from 'ip-address';
+import * as ipAddr from 'ip-address';
 import path from 'path';
 import sinon from 'sinon';
 import { Reader } from '../';
