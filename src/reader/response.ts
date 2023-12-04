@@ -67,6 +67,7 @@ interface TraitsRecord {
   readonly is_anonymous?: boolean;
   readonly is_anonymous_proxy?: boolean;
   readonly is_anonymous_vpn?: boolean;
+  readonly is_anycast?: boolean;
   readonly is_hosting_provider?: boolean;
   readonly is_legitimate_proxy?: boolean;
   readonly is_public_proxy?: boolean;
