@@ -147,7 +147,6 @@ describe('findAddressInTree()', () => {
   describe('invalid database format', () => {
     it('should provide meaningful message when one tries to use legacy db', () => {
       assert.throws(() => {
-        // tslint:disable-next-line: no-unused-expression
         new Reader(
           read(path.join(__dirname, '../test/databases'), 'legacy.dat')
         );
@@ -156,7 +155,6 @@ describe('findAddressInTree()', () => {
 
     it('should provide meaningful message when one tries to use unknown format', () => {
       assert.throws(() => {
-        // tslint:disable-next-line: no-unused-expression
         new Reader(
           read(path.join(__dirname, '../test/databases'), 'broken.dat')
         );
