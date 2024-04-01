@@ -16,7 +16,7 @@
     "Uman Shahzad @UmanShahzad"
   ],
   "devDependencies": {
-    "@types/ip-address": "6.0.0",
+    "@types/ip-address": "7.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "20.12.2",
     "@types/sinon": "17.0.3",
