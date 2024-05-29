@@ -1,8 +1,7 @@
-import assert from 'assert';
 import utils from './utils';
 import { Cache } from './types';
 
-assert(
+utils.assert(
   typeof BigInt !== 'undefined',
   'Apparently you are using old version of node. Please upgrade to node 10.4.x or above.'
 );
@@ -47,7 +46,8 @@ export default class Decoder {
   private cache: Cache;
 
   constructor(db: Buffer, baseOffset = 0, cache: Cache = noCache) {
-    assert((this.db = db), 'Database buffer is required');
+    utils.assert(Boolean(db), 'Database buffer is required');
+    this.db = db;
     this.baseOffset = baseOffset;
     this.cache = cache;
   }

@@ -1,4 +1,3 @@
-import assert from 'assert';
 import Decoder from './decoder';
 import utils from './utils';
 
@@ -35,7 +34,7 @@ export const parseMetadata = (db: Buffer): Metadata => {
     );
   }
 
-  assert(
+  utils.assert(
     [24, 28, 32].indexOf(metadata.record_size) > -1,
     'Unsupported record size'
   );
