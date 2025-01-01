@@ -21,7 +21,7 @@
     "@types/node": "22.10.1",
     "@types/sinon": "17.0.3",
     "ip-address": "10.0.1",
-    "mocha": "^10.2.0",
+    "mocha": "^11.0.0",
     "prettier": "^3.0.0",
     "semantic-release": "^24.0.0",
     "sinon": "19.0.2",
