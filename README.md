@@ -30,6 +30,7 @@ Supported response types:
 - CountryResponse
 - CityResponse
 - AnonymousIPResponse
+- AnonymousPlusResponse
 - AsnResponse
 - ConnectionTypeResponse
 - DomainResponse
