@@ -236,12 +236,12 @@ export default class Decoder {
 
   private decodeArray(size: number, offset: number): Cursor {
     let tmp;
-    const array = [];
+    const array = new Array(size);
 
     for (let i = 0; i < size; i++) {
       tmp = this.decode(offset);
       offset = tmp.offset;
-      array.push(tmp.value);
+      array[i] = tmp.value;
     }
 
     return cursor(array, offset);
