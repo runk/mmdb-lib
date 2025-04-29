@@ -263,6 +263,9 @@ export default class Decoder {
     if (size === 0) {
       return 0;
     }
+    if (size < 4) {
+      return this.db.readUIntBE(offset, size);
+    }
     return this.db.readInt32BE(offset);
   }
 
