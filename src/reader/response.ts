@@ -126,8 +126,8 @@ export interface AnonymousIPResponse {
 
 export interface AnonymousPlusResponse extends AnonymousIPResponse {
   readonly anonymizer_confidence?: number;
-  readonly network_last_seen?: string
-  readonly provider_name?: string
+  readonly network_last_seen?: string;
+  readonly provider_name?: string;
 }
 
 export interface AsnResponse {
