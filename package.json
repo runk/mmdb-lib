@@ -13,7 +13,8 @@
   "author": "Dmitry Shirokov <deadrunk@gmail.com>",
   "contributors": [
     "William Storey @horgh",
-    "Uman Shahzad @UmanShahzad"
+    "Uman Shahzad @UmanShahzad",
+    "Gregory Oschwald @oschwald"
   ],
   "devDependencies": {
     "@types/ip-address": "7.0.0",
@@ -50,8 +51,9 @@
     "build": "rm -rf lib/* && tsc",
     "typecheck": "tsc --noEmit",
     "test": "mocha",
-    "test-imports": "node test/imports/commonjs.js && node test/imports/esm.mjs && ts-node test/imports/typescript.ts",
+    "test:imports": "node test/imports/commonjs.js && node test/imports/esm.mjs && ts-node test/imports/typescript.ts",
     "format": "prettier --write src",
+    "format:check": "prettier --check src",
     "prepublish": "npm run build",
     "semantic-release": "semantic-release"
   }
