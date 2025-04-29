@@ -181,7 +181,7 @@ export default class Decoder {
   }
 
   private decodeBytes(offset: number, size: number): Buffer {
-    return this.db.slice(offset, offset + size);
+    return this.db.subarray(offset, offset + size);
   }
 
   private decodePointer(ctrlByte: number, offset: number): Cursor {
