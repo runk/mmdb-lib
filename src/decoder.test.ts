@@ -27,6 +27,30 @@ describe('lib/decoder', () => {
     });
   });
 
+  describe('decodeInt()', () => {
+    const testCases = [
+      { expected: 0, input: [0x0, 0x1] },
+      { expected: -1, input: [0x4, 0x1, 0xff, 0xff, 0xff, 0xff] },
+      { expected: 255, input: [0x1, 0x1, 0xff] },
+      { expected: -255, input: [0x4, 0x1, 0xff, 0xff, 0xff, 0x1] },
+      { expected: 500, input: [0x2, 0x1, 0x1, 0xf4] },
+      { expected: -500, input: [0x4, 0x1, 0xff, 0xff, 0xfe, 0xc] },
+      { expected: 65535, input: [0x2, 0x1, 0xff, 0xff] },
+      { expected: -65535, input: [0x4, 0x1, 0xff, 0xff, 0x0, 0x1] },
+      { expected: 16777215, input: [0x3, 0x1, 0xff, 0xff, 0xff] },
+      { expected: -16777215, input: [0x4, 0x1, 0xff, 0x0, 0x0, 0x1] },
+      { expected: 2147483647, input: [0x4, 0x1, 0x7f, 0xff, 0xff, 0xff] },
+      { expected: -2147483647, input: [0x4, 0x1, 0x80, 0x0, 0x0, 0x1] },
+    ];
+
+    for (let tc of testCases) {
+      it(`should decode to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
   describe('decode()', () => {
     it('should throw when extended type has wrong size', () => {
       const test = new Decoder(Buffer.from([0x00, 0x00]));

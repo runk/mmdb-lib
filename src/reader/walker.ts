@@ -1,5 +1,3 @@
-import utils from '../utils';
-
 type NodeReader = (offset: number) => number;
 
 export interface Walker {
@@ -10,32 +8,22 @@ export interface Walker {
 const readNodeRight24 =
   (db: Buffer): NodeReader =>
   (offset: number): number =>
-    utils.concat3(db[offset + 3], db[offset + 4], db[offset + 5]);
+    db.readUIntBE(offset + 3, 3);
 
 const readNodeLeft24 =
   (db: Buffer): NodeReader =>
   (offset: number): number =>
-    utils.concat3(db[offset], db[offset + 1], db[offset + 2]);
+    db.readUIntBE(offset, 3);
 
 const readNodeLeft28 =
   (db: Buffer): NodeReader =>
   (offset: number): number =>
-    utils.concat4(
-      db[offset + 3] >> 4,
-      db[offset],
-      db[offset + 1],
-      db[offset + 2]
-    );
+    ((db[offset + 3] & 0xf0) << 20) | db.readUIntBE(offset, 3);
 
 const readNodeRight28 =
   (db: Buffer): NodeReader =>
   (offset: number): number =>
-    utils.concat4(
-      db[offset + 3] & 0x0f,
-      db[offset + 4],
-      db[offset + 5],
-      db[offset + 6]
-    );
+    ((db[offset + 3] & 0x0f) << 24) | db.readUIntBE(offset + 4, 3);
 
 const readNodeLeft32 =
   (db: Buffer): NodeReader =>

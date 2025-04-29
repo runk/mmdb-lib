@@ -169,19 +169,11 @@ export default class Decoder {
     // At this point `size` is always 31.
     // If the value is 31, then the size is 65,821 + *the next three bytes after the
     // type specifying bytes as a single unsigned integer*.
-    return cursor(
-      65821 +
-        utils.concat3(
-          this.db[offset],
-          this.db[offset + 1],
-          this.db[offset + 2]
-        ),
-      offset + 3
-    );
+    return cursor(65821 + this.db.readUIntBE(offset, 3), offset + 3);
   }
 
   private decodeBytes(offset: number, size: number): Buffer {
-    return this.db.slice(offset, offset + size);
+    return this.db.subarray(offset, offset + size);
   }
 
   private decodePointer(ctrlByte: number, offset: number): Cursor {
@@ -201,26 +193,17 @@ export default class Decoder {
     // If the size is 0, the pointer is built by appending the next byte to the last
     // three bits to produce an 11-bit value.
     if (pointerSize === 0) {
-      packed = utils.concat2(ctrlByte & 7, this.db[offset]);
+      packed = ((ctrlByte & 7) << 8) | this.db[offset];
 
       // If the size is 1, the pointer is built by appending the next two bytes to the
       // last three bits to produce a 19-bit value + 2048.
     } else if (pointerSize === 1) {
-      packed = utils.concat3(
-        ctrlByte & 7,
-        this.db[offset],
-        this.db[offset + 1]
-      );
+      packed = ((ctrlByte & 7) << 16) | this.db.readUInt16BE(offset);
 
       // If the size is 2, the pointer is built by appending the next three bytes to the
       // last three bits to produce a 27-bit value + 526336.
     } else if (pointerSize === 2) {
-      packed = utils.concat4(
-        ctrlByte & 7,
-        this.db[offset],
-        this.db[offset + 1],
-        this.db[offset + 2]
-      );
+      packed = ((ctrlByte & 7) << 24) | this.db.readUIntBE(offset, 3);
 
       // At next point `size` is always 3.
       // Finally, if the size is 3, the pointer's value is contained in the next four
@@ -236,12 +219,12 @@ export default class Decoder {
 
   private decodeArray(size: number, offset: number): Cursor {
     let tmp;
-    const array = [];
+    const array = new Array(size);
 
     for (let i = 0; i < size; i++) {
       tmp = this.decode(offset);
       offset = tmp.offset;
-      array.push(tmp.value);
+      array[i] = tmp.value;
     }
 
     return cursor(array, offset);
@@ -280,40 +263,30 @@ export default class Decoder {
     if (size === 0) {
       return 0;
     }
+    if (size < 4) {
+      return this.db.readUIntBE(offset, size);
+    }
     return this.db.readInt32BE(offset);
   }
 
   private decodeUint(offset: number, size: number) {
-    switch (size) {
-      case 0:
-        return 0;
-      case 1:
-        return this.db[offset];
-      case 2:
-        return utils.concat2(this.db[offset + 0], this.db[offset + 1]);
-      case 3:
-        return utils.concat3(
-          this.db[offset + 0],
-          this.db[offset + 1],
-          this.db[offset + 2]
-        );
-      case 4:
-        return utils.concat4(
-          this.db[offset + 0],
-          this.db[offset + 1],
-          this.db[offset + 2],
-          this.db[offset + 3]
-        );
-      case 8:
-        return this.decodeBigUint(offset, size);
-      case 16:
-        return this.decodeBigUint(offset, size);
+    if (size === 0) {
+      return 0;
     }
-    return 0;
+    if (size <= 6) {
+      return this.db.readUIntBE(offset, size);
+    }
+    if (size == 8) {
+      return this.db.readBigInt64BE(offset).toString();
+    }
+    if (size > 16) {
+      return 0;
+    }
+    return this.decodeBigUint(offset, size);
   }
 
   private decodeString(offset: number, size: number) {
-    return this.db.slice(offset, offset + size).toString();
+    return this.db.toString('utf8', offset, offset + size);
   }
 
   private decodeBigUint(offset: number, size: number) {
