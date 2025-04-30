@@ -27,6 +27,180 @@ describe('lib/decoder', () => {
     });
   });
 
+  describe('decodeArray()', () => {
+    const testCases = [
+      {
+        expected: [],
+        input: [0x0, 0x4],
+        name: 'empty array',
+      },
+      {
+        expected: ['Foo'],
+        input: [
+          0x1, 0x4,
+          // Foo
+          0x43, 0x46, 0x6f, 0x6f,
+        ],
+        name: 'one element array',
+      },
+      {
+        expected: ['Foo', '人'],
+        input: [
+          0x2, 0x4,
+          // Foo
+          0x43, 0x46, 0x6f, 0x6f,
+          // 人
+          0x43, 0xe4, 0xba, 0xba,
+        ],
+        name: 'two element array',
+      },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${tc.name} correctly`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeBoolean()', () => {
+    const testCases = [
+      { expected: false, input: [0x0, 0x7] },
+      { expected: true, input: [0x1, 0x7] },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeBytes()', () => {
+    const testCases = [
+      { expected: Buffer.from(''), input: [0x90] },
+      { expected: Buffer.from('1'), input: [0x91, 0x31] },
+      { expected: Buffer.from('人'), input: [0x93, 0xe4, 0xba, 0xba] },
+      { expected: Buffer.from('123'), input: [0x93, 0x31, 0x32, 0x33] },
+      {
+        expected: Buffer.from('123456789012345678901234567'),
+        input: [
+          0x9b, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
+          0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31,
+          0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        ],
+      },
+      {
+        expected: Buffer.from('x'.repeat(500)),
+        input: [0x9e, 0x01, 0xc1, ...Array(500).fill(0x78)],
+      },
+      {
+        expected: Buffer.from('x'.repeat(2000)),
+        input: [0x9e, 0x06, 0xb4, ...Array(2000).fill(0x78)],
+      },
+      {
+        expected: Buffer.from('x'.repeat(70000)),
+        input: [0x9f, 0x01, 0x10, 0x30, ...Array(70000).fill(0x78)],
+      },
+    ];
+
+    for (const tc of testCases) {
+      const inputStr =
+        tc.input.length > 20
+          ? `[${tc.input.slice(0, 10).join(',')},...] (${tc.input.length} bytes)`
+          : JSON.stringify(tc.input);
+      const expectedStr =
+        tc.expected.length > 50
+          ? `<Buffer ${tc.expected.toString('hex', 0, 20)}... (${tc.expected.length} bytes)>`
+          : `<Buffer ${tc.expected.toString('hex')}>`;
+
+      it(`should decode ${inputStr} to ${expectedStr}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        const result = decoder.decode(0).value;
+        assert.deepStrictEqual(result, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeDouble()', () => {
+    const testCases = [
+      { expected: 0.0, input: [0x68, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0] },
+      {
+        expected: 0.5,
+        input: [0x68, 0x3f, 0xe0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
+      },
+      {
+        expected: 3.14159265359,
+        input: [0x68, 0x40, 0x9, 0x21, 0xfb, 0x54, 0x44, 0x2e, 0xea],
+      },
+      {
+        expected: 123.0,
+        input: [0x68, 0x40, 0x5e, 0xc0, 0x0, 0x0, 0x0, 0x0, 0x0],
+      },
+      {
+        expected: 1073741824.12457,
+        input: [0x68, 0x41, 0xd0, 0x0, 0x0, 0x0, 0x7, 0xf8, 0xf4],
+      },
+      {
+        expected: -0.5,
+        input: [0x68, 0xbf, 0xe0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
+      },
+      {
+        expected: -3.14159265359,
+        input: [0x68, 0xc0, 0x9, 0x21, 0xfb, 0x54, 0x44, 0x2e, 0xea],
+      },
+      {
+        expected: -1073741824.12457,
+        input: [0x68, 0xc1, 0xd0, 0x0, 0x0, 0x0, 0x7, 0xf8, 0xf4],
+      },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${JSON.stringify(tc.input.slice(1))} to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeFloat()', () => {
+    const testCases = [
+      { expected: 0.0, input: [0x04, 0x08, 0x00, 0x00, 0x00, 0x00] },
+      { expected: 1.0, input: [0x04, 0x08, 0x3f, 0x80, 0x00, 0x00] },
+      {
+        expected: 1.100000023841858,
+        input: [0x04, 0x08, 0x3f, 0x8c, 0xcc, 0xcd],
+      },
+      {
+        expected: 3.140000104904175,
+        input: [0x04, 0x08, 0x40, 0x48, 0xf5, 0xc3],
+      },
+      { expected: 9999.990234375, input: [0x04, 0x08, 0x46, 0x1c, 0x3f, 0xf6] },
+      { expected: -1.0, input: [0x04, 0x08, 0xbf, 0x80, 0x00, 0x00] },
+      {
+        expected: -1.100000023841858,
+        input: [0x04, 0x08, 0xbf, 0x8c, 0xcc, 0xcd],
+      },
+      {
+        expected: -3.140000104904175,
+        input: [0x04, 0x08, 0xc0, 0x48, 0xf5, 0xc3],
+      },
+      {
+        expected: -9999.990234375,
+        input: [0x04, 0x08, 0xc6, 0x1c, 0x3f, 0xf6],
+      },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${JSON.stringify(tc.input.slice(2))} to approx ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
   describe('decodeInt()', () => {
     const testCases = [
       { expected: 0, input: [0x0, 0x1] },
@@ -44,9 +218,242 @@ describe('lib/decoder', () => {
     ];
 
     for (let tc of testCases) {
-      it(`should decode to ${tc.expected}`, () => {
+      it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
         const decoder = new Decoder(Buffer.from(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeMap()', () => {
+    const testCases = [
+      {
+        expected: {},
+        input: [0xe0],
+        name: 'empty map',
+      },
+      {
+        expected: { en: 'Foo' },
+        input: [
+          0xe1,
+          // key "en"
+          0x42, 0x65, 0x6e,
+          // value "Foo"
+          0x43, 0x46, 0x6f, 0x6f,
+        ],
+        name: 'map with one key',
+      },
+      {
+        expected: { en: 'Foo', zh: '人' },
+        input: [
+          0xe2,
+          // key "en"
+          0x42, 0x65, 0x6e,
+          // value "Foo"
+          0x43, 0x46, 0x6f, 0x6f,
+          // key "zh"
+          0x42, 0x7a, 0x68,
+          // value "人"
+          0x43, 0xe4, 0xba, 0xba,
+        ],
+        name: 'map with two keys',
+      },
+      {
+        expected: { name: { en: 'Foo', zh: '人' } },
+        input: [
+          0xe1,
+          // key: "name"
+          0x44, 0x6e, 0x61, 0x6d, 0x65, 0xe2,
+          // key: "en"
+          0x42, 0x65, 0x6e,
+          // value: "Foo"
+          0x43, 0x46, 0x6f, 0x6f,
+          // key: "zh"
+          0x42, 0x7a, 0x68,
+          // value: "人"
+          0x43, 0xe4, 0xba, 0xba,
+        ],
+        name: 'nested map',
+      },
+      {
+        expected: { languages: ['en', 'zh'] },
+        input: [
+          0xe1,
+          // key: "languages"
+          0x49, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x73,
+          // value: array, size 2
+          0x2, 0x4,
+          // value: "en"
+          0x42, 0x65, 0x6e,
+          // value: "zh"
+          0x42, 0x7a, 0x68,
+        ],
+        name: 'map with array value',
+      },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${tc.name} correctly`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeString()', () => {
+    const testCases = [
+      { expected: '', input: [0x40] },
+      { expected: '1', input: [0x41, 0x31] },
+      { expected: '人', input: [0x43, 0xe4, 0xba, 0xba] },
+      { expected: '123', input: [0x43, 0x31, 0x32, 0x33] },
+      {
+        expected: '123456789012345678901234567',
+        input: [
+          0x5b, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
+          0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31,
+          0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        ],
+      },
+      {
+        expected: '1234567890123456789012345678',
+        input: [
+          0x5c, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
+          0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31,
+          0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+        ],
+      },
+      {
+        expected: '12345678901234567890123456789',
+        input: [
+          0x5d, 0x00, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+          0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
+          0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+        ],
+      },
+      {
+        expected: '123456789012345678901234567890',
+        input: [
+          0x5d, 0x01, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+          0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
+          0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
+        ],
+      },
+      {
+        expected: 'x'.repeat(500),
+        input: [0x5e, 0x01, 0xc1, ...Array(500).fill(0x78)],
+      },
+      {
+        expected: 'x'.repeat(2000),
+        input: [0x5e, 0x06, 0xb4, ...Array(2000).fill(0x78)],
+      },
+      {
+        expected: 'x'.repeat(70000),
+        input: [0x5f, 0x01, 0x10, 0x30, ...Array(70000).fill(0x78)],
+      },
+    ];
+
+    for (const tc of testCases) {
+      const inputStr =
+        tc.input.length > 20
+          ? `[${tc.input.slice(0, 10).join(',')},...] (${tc.input.length} bytes)`
+          : JSON.stringify(tc.input);
+      const expectedStr =
+        tc.expected.length > 50
+          ? `'${tc.expected.substring(0, 20)}...' (${tc.expected.length} chars)`
+          : `'${tc.expected}'`;
+
+      it(`should decode ${inputStr} to ${expectedStr}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeUint() - uint16', () => {
+    const testCases = [
+      { expected: 0, input: [0xa0] },
+      { expected: 255, input: [0xa1, 0xff] },
+      { expected: 500, input: [0xa2, 0x01, 0xf4] },
+      { expected: 10872, input: [0xa2, 0x2a, 0x78] },
+      { expected: 65535, input: [0xa2, 0xff, 0xff] },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeUint() - uint32', () => {
+    const testCases = [
+      { expected: 0, input: [0xc0] },
+      { expected: 255, input: [0xc1, 0xff] },
+      { expected: 500, input: [0xc2, 0x01, 0xf4] },
+      { expected: 10872, input: [0xc2, 0x2a, 0x78] },
+      { expected: 65535, input: [0xc2, 0xff, 0xff] },
+      { expected: 16777215, input: [0xc3, 0xff, 0xff, 0xff] },
+      { expected: 4294967295, input: [0xc4, 0xff, 0xff, 0xff, 0xff] },
+    ];
+
+    for (const tc of testCases) {
+      it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
+      });
+    }
+  });
+
+  function generateLargeUintCases(
+    bits: 64 | 128
+  ): { expected: number | string; input: number[] }[] {
+    const ctrlByte = bits === 64 ? 0x02 : 0x03;
+    const cases: { expected: number | string; input: number[] }[] = [];
+
+    cases.push({ expected: 0, input: [0x00, ctrlByte] });
+    cases.push({ expected: 500, input: [0x02, ctrlByte, 0x01, 0xf4] });
+    cases.push({ expected: 10872, input: [0x02, ctrlByte, 0x2a, 0x78] });
+
+    const maxBytes = bits / 8;
+    for (let byteCount = 1; byteCount <= maxBytes; byteCount++) {
+      const expectedNum = (1n << BigInt(8 * byteCount)) - 1n;
+      // For some reason we convert big ints to strings in the decoder
+      const expectedValue =
+        byteCount <= 6 ? Number(expectedNum) : expectedNum.toString();
+
+      const inputBytes: number[] = Array(byteCount).fill(0xff);
+      const input = [byteCount, ctrlByte, ...inputBytes];
+      cases.push({ expected: expectedValue, input: input });
+    }
+    return cases;
+  }
+
+  describe('decodeUint() - uint64', () => {
+    const testCases = generateLargeUintCases(64);
+
+    for (const tc of testCases) {
+      it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        const result = decoder.decode(0).value;
+        assert.deepStrictEqual(result, tc.expected);
+      });
+    }
+  });
+
+  describe('decodeUint() - uint128', () => {
+    const testCases = generateLargeUintCases(128);
+
+    for (const tc of testCases) {
+      const inputStr =
+        tc.input.length > 10
+          ? `[${tc.input[0]},${tc.input[1]},... (${tc.input.length} bytes)`
+          : JSON.stringify(tc.input);
+
+      it(`should decode ${inputStr} to ${tc.expected}`, () => {
+        const decoder = new Decoder(Buffer.from(tc.input));
+        const result = decoder.decode(0).value;
+        assert.deepStrictEqual(result, tc.expected);
       });
     }
   });
