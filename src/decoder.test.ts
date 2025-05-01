@@ -78,6 +78,12 @@ describe('lib/decoder', () => {
     }
   });
 
+  function formatInput(v: number[]): string {
+    return v.length > 20
+      ? `[${v.slice(0, 10).join(',')},...] (${v.length} bytes)`
+      : JSON.stringify(v);
+  }
+
   describe('decodeBytes()', () => {
     const testCases = [
       { expected: Buffer.from(''), input: [0x90] },
@@ -107,10 +113,7 @@ describe('lib/decoder', () => {
     ];
 
     for (const tc of testCases) {
-      const inputStr =
-        tc.input.length > 20
-          ? `[${tc.input.slice(0, 10).join(',')},...] (${tc.input.length} bytes)`
-          : JSON.stringify(tc.input);
+      const inputStr = formatInput(tc.input);
       const expectedStr =
         tc.expected.length > 50
           ? `<Buffer ${tc.expected.toString('hex', 0, 20)}... (${tc.expected.length} bytes)>`
@@ -353,10 +356,7 @@ describe('lib/decoder', () => {
     ];
 
     for (const tc of testCases) {
-      const inputStr =
-        tc.input.length > 20
-          ? `[${tc.input.slice(0, 10).join(',')},...] (${tc.input.length} bytes)`
-          : JSON.stringify(tc.input);
+      const inputStr = formatInput(tc.input);
       const expectedStr =
         tc.expected.length > 50
           ? `'${tc.expected.substring(0, 20)}...' (${tc.expected.length} chars)`
@@ -445,10 +445,7 @@ describe('lib/decoder', () => {
     const testCases = generateLargeUintCases(128);
 
     for (const tc of testCases) {
-      const inputStr =
-        tc.input.length > 10
-          ? `[${tc.input[0]},${tc.input[1]},... (${tc.input.length} bytes)`
-          : JSON.stringify(tc.input);
+      const inputStr = formatInput(tc.input);
 
       it(`should decode ${inputStr} to ${tc.expected}`, () => {
         const decoder = new Decoder(Buffer.from(tc.input));
