@@ -277,7 +277,7 @@ export default class Decoder {
       return this.db.readUIntBE(offset, size);
     }
     if (size == 8) {
-      return this.db.readBigInt64BE(offset).toString();
+      return this.db.readBigUInt64BE(offset).toString();
     }
     if (size > 16) {
       return 0;
@@ -290,17 +290,11 @@ export default class Decoder {
   }
 
   private decodeBigUint(offset: number, size: number) {
-    const buffer = Buffer.alloc(size);
-    this.db.copy(buffer, 0, offset, offset + size);
-
-    let integer = BigInt(0);
-
-    const numberOfLongs = size / 4;
-    for (let i = 0; i < numberOfLongs; i++) {
-      integer =
-        integer * BigInt(4294967296) + BigInt(buffer.readUInt32BE(i << 2));
+    let integer = 0n;
+    for (let i = 0; i < size; i++) {
+      integer <<= 8n;
+      integer |= BigInt(this.db.readUInt8(offset + i));
     }
-
     return integer.toString();
   }
 }
