@@ -123,9 +123,9 @@ export default class Decoder {
       case DataType.Int32:
         return cursor(this.decodeInt32(offset, size), newOffset);
       case DataType.Uint64:
-        return cursor(this.decodeUint(offset, size), newOffset);
+        return cursor(this.decodeBigUint(offset, size), newOffset);
       case DataType.Uint128:
-        return cursor(this.decodeUint(offset, size), newOffset);
+        return cursor(this.decodeBigUint(offset, size), newOffset);
     }
 
     throw new Error('Unknown type ' + type + ' at offset ' + offset);
@@ -269,32 +269,31 @@ export default class Decoder {
     return this.db.readInt32BE(offset);
   }
 
-  private decodeUint(offset: number, size: number) {
+  private decodeUint(offset: number, size: number): number {
     if (size === 0) {
       return 0;
     }
-    if (size <= 6) {
+    if (size <= 4) {
       return this.db.readUIntBE(offset, size);
     }
-    if (size == 8) {
-      return this.db.readBigUInt64BE(offset).toString();
-    }
-    if (size > 16) {
-      return 0;
-    }
-    return this.decodeBigUint(offset, size);
+
+    throw new Error(`Invalid size for unsigned integer: ${size}`);
   }
 
   private decodeString(offset: number, size: number) {
     return this.db.toString('utf8', offset, offset + size);
   }
 
-  private decodeBigUint(offset: number, size: number) {
+  private decodeBigUint(offset: number, size: number): bigint {
+    if (size > 16) {
+      throw new Error(`Invalid size for big unsigned integer: ${size}`);
+    }
+
     let integer = 0n;
     for (let i = 0; i < size; i++) {
       integer <<= 8n;
       integer |= BigInt(this.db.readUInt8(offset + i));
     }
-    return integer.toString();
+    return integer;
   }
 }

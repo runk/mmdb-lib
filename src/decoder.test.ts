@@ -1,6 +1,4 @@
 import { strict as assert } from 'assert';
-import fs from 'fs';
-import path from 'path';
 import Decoder from './decoder';
 
 describe('lib/decoder', () => {
@@ -11,19 +9,6 @@ describe('lib/decoder', () => {
         // @ts-ignore
         decoder.decodeByType(20, 0, 1);
       }, /Unknown type/);
-    });
-  });
-
-  describe('decodeUint()', () => {
-    it('should return zero for unsupported int size', () => {
-      const decoder: any = new Decoder(
-        fs.readFileSync(
-          path.join(__dirname, '../test/data/test-data/GeoIP2-City-Test.mmdb')
-        ),
-        1
-      );
-
-      assert.strictEqual(decoder.decodeUint(1, 32), 0);
     });
   });
 
@@ -407,20 +392,17 @@ describe('lib/decoder', () => {
 
   function generateLargeUintCases(
     bits: 64 | 128
-  ): { expected: number | string; input: number[] }[] {
+  ): { expected: bigint; input: number[] }[] {
     const ctrlByte = bits === 64 ? 0x02 : 0x03;
-    const cases: { expected: number | string; input: number[] }[] = [];
-
-    cases.push({ expected: 0, input: [0x00, ctrlByte] });
-    cases.push({ expected: 500, input: [0x02, ctrlByte, 0x01, 0xf4] });
-    cases.push({ expected: 10872, input: [0x02, ctrlByte, 0x2a, 0x78] });
+    const cases = [
+      { expected: 0n, input: [0x00, ctrlByte] },
+      { expected: 500n, input: [0x02, ctrlByte, 0x01, 0xf4] },
+      { expected: 10872n, input: [0x02, ctrlByte, 0x2a, 0x78] },
+    ];
 
     const maxBytes = bits / 8;
     for (let byteCount = 1; byteCount <= maxBytes; byteCount++) {
-      const expectedNum = (1n << BigInt(8 * byteCount)) - 1n;
-      // For some reason we convert big ints to strings in the decoder
-      const expectedValue =
-        byteCount <= 6 ? Number(expectedNum) : expectedNum.toString();
+      const expectedValue = (1n << BigInt(8 * byteCount)) - 1n;
 
       const inputBytes: number[] = Array(byteCount).fill(0xff);
       const input = [byteCount, ctrlByte, ...inputBytes];
@@ -429,7 +411,7 @@ describe('lib/decoder', () => {
     return cases;
   }
 
-  describe('decodeUint() - uint64', () => {
+  describe('decodeBigUint() - uint64', () => {
     const testCases = generateLargeUintCases(64);
 
     for (const tc of testCases) {
@@ -441,7 +423,7 @@ describe('lib/decoder', () => {
     }
   });
 
-  describe('decodeUint() - uint128', () => {
+  describe('decodeBigUint() - uint128', () => {
     const testCases = generateLargeUintCases(128);
 
     for (const tc of testCases) {
