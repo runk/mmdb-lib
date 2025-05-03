@@ -27,7 +27,7 @@
     "semantic-release": "^24.0.0",
     "sinon": "20.0.0",
     "ts-node": "^10.4.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.3"
   },
   "repository": {
     "type": "git",
