@@ -281,9 +281,9 @@ export default class Decoder {
   }
 
   private decodeString(offset: number, size: number) {
-    const newOffset = offset + size 
-    return newOffset >= 2147483648 // 2^31 Nodejs Buffer limit
-      ? this.db.slice(offset, newOffset).toString('utf8')
+    const newOffset = offset + size;
+    return newOffset >= 2147483648 // 2^31 Buffer.toString() limit
+      ? this.db.subarray(offset, newOffset).toString('utf8')
       : this.db.toString('utf8', offset, newOffset);
   }
 
