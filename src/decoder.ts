@@ -6,6 +6,8 @@ utils.assert(
   'Apparently you are using old version of node. Please upgrade to node 10.4.x or above.'
 );
 
+const MAX_INT_32 = 2_147_483_647;
+
 enum DataType {
   Extended = 0,
   Pointer = 1,
@@ -282,7 +284,7 @@ export default class Decoder {
 
   private decodeString(offset: number, size: number) {
     const newOffset = offset + size;
-    return newOffset >= 2147483648 // 2^31 Buffer.toString() limit
+    return newOffset >= MAX_INT_32
       ? this.db.subarray(offset, newOffset).toString('utf8')
       : this.db.toString('utf8', offset, newOffset);
   }

@@ -379,9 +379,11 @@ describe('lib/decoder', () => {
       return Buffer.concat([padding, header, contentBuf]);
     }
 
+    const MAX_INT_32 = 2147483648;
+
     it('should handle string just below 2^31 boundary', function () {
       this.timeout(15000);
-      const offset = 0x7ffffff0; // 2^31 - 16
+      const offset = MAX_INT_32 - 16;
       const content = 'boundary test';
 
       const buffer = createBufferWithStringAtOffset(offset, content);
@@ -398,7 +400,7 @@ describe('lib/decoder', () => {
 
     it('should handle when string at offset >= 2^31', function () {
       this.timeout(15000);
-      const offset = 0x80000000; // Exactly 2^31
+      const offset = MAX_INT_32;
       const content = 'test';
 
       const buffer = createBufferWithStringAtOffset(offset, content);
