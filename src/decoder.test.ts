@@ -352,6 +352,67 @@ describe('lib/decoder', () => {
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
+
+    function createBufferWithStringAtOffset(
+      offset: number,
+      content: string
+    ): Buffer {
+      const contentBuf = Buffer.from(content);
+      const size = contentBuf.length;
+      const padding = Buffer.alloc(offset);
+
+      let header: Buffer;
+      if (size <= 0x1f) {
+        header = Buffer.from([0x40 | size]);
+      } else if (size <= 0xffff) {
+        header = Buffer.from([0x40 | 0x1f, (size >> 8) & 0xff, size & 0xff]);
+      } else {
+        header = Buffer.from([
+          0x5f,
+          (size >> 24) & 0xff,
+          (size >> 16) & 0xff,
+          (size >> 8) & 0xff,
+          size & 0xff,
+        ]);
+      }
+
+      return Buffer.concat([padding, header, contentBuf]);
+    }
+
+    const MAX_INT_32 = 2147483648;
+
+    it('should handle string just below 2^31 boundary', function () {
+      this.timeout(15000);
+      const offset = MAX_INT_32 - 16;
+      const content = 'boundary test';
+
+      const buffer = createBufferWithStringAtOffset(offset, content);
+
+      const decoder = new Decoder(buffer);
+
+      const result = decoder.decode(offset);
+      assert.strictEqual(result.value, content);
+      assert(
+        result.offset > offset,
+        `Offset ${result.offset} should be > ${offset}`
+      );
+    });
+
+    it('should handle when string at offset >= 2^31', function () {
+      this.timeout(15000);
+      const offset = MAX_INT_32;
+      const content = 'test';
+
+      const buffer = createBufferWithStringAtOffset(offset, content);
+      const decoder = new Decoder(buffer);
+
+      const result = decoder.decode(offset);
+      assert.strictEqual(result.value, content);
+      assert(
+        result.offset > offset,
+        `Offset ${result.offset} should be > ${offset}`
+      );
+    });
   });
 
   describe('decodeUint() - uint16', () => {
