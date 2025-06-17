@@ -353,10 +353,10 @@ describe('lib/decoder', () => {
       });
     }
 
-    function createBufferWithStringAtOffset(
+    const createBufferWithStringAtOffset = (
       offset: number,
       content: string
-    ): Buffer {
+    ): Buffer => {
       const contentBuf = Buffer.from(content);
       const size = contentBuf.length;
       const padding = Buffer.alloc(offset);
@@ -377,7 +377,7 @@ describe('lib/decoder', () => {
       }
 
       return Buffer.concat([padding, header, contentBuf]);
-    }
+    };
 
     const MAX_INT_32 = 2147483648;
 
@@ -406,6 +406,21 @@ describe('lib/decoder', () => {
       const buffer = createBufferWithStringAtOffset(offset, content);
       const decoder = new Decoder(buffer);
 
+      const result = decoder.decode(offset);
+      assert.strictEqual(result.value, content);
+      assert(
+        result.offset > offset,
+        `Offset ${result.offset} should be > ${offset}`
+      );
+    });
+
+    it.only('should handle string that spans the 2^31 boundary', function () {
+      this.timeout(15000);
+      const content = 'string spans the boundary';
+      const offset = MAX_INT_32 - Math.round(content.length / 2);
+      const buffer = createBufferWithStringAtOffset(offset, content);
+
+      const decoder = new Decoder(buffer);
       const result = decoder.decode(offset);
       assert.strictEqual(result.value, content);
       assert(
