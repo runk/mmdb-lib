@@ -414,7 +414,7 @@ describe('lib/decoder', () => {
       );
     });
 
-    it.only('should handle string that spans the 2^31 boundary', function () {
+    it('should handle string that spans the 2^31 boundary', function () {
       this.timeout(15000);
       const content = 'string spans the boundary';
       const offset = MAX_INT_32 - Math.round(content.length / 2);
