@@ -19,7 +19,7 @@
   "devDependencies": {
     "@types/ip-address": "7.0.0",
     "@types/mocha": "^10.0.1",
-    "@types/node": "22.15.31",
+    "@types/node": "22.16.5",
     "@types/sinon": "17.0.4",
     "ip-address": "10.0.1",
     "mocha": "^11.0.0",
