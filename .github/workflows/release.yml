@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - master
+
+permissions:
+  id-token: write # Required for OIDC / npm trusted publishing
+  contents: write # To create releases
+
+
 jobs:
   release:
     name: Release
@@ -23,5 +29,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
