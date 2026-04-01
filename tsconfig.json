@@ -11,7 +11,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
-    "types": ["node"]
+    "types": ["node", "mocha"]
   },
   "exclude": [
     "__mocks__",
