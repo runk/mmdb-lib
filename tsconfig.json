@@ -4,12 +4,14 @@
     "module": "commonjs",
     "target": "es2021",
     "outDir": "lib",
+    "rootDir": "src",
 
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
+    "types": ["node", "mocha"]
   },
   "exclude": [
     "__mocks__",
