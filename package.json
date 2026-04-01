@@ -54,7 +54,6 @@
     "test:imports": "node test/imports/commonjs.js && node test/imports/esm.mjs && ts-node test/imports/typescript.ts",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "prepublish": "npm run build",
     "semantic-release": "semantic-release"
   }
 }
