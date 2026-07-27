@@ -4,8 +4,8 @@ import path from 'path';
 import { Reader } from '.';
 
 const dataDir = path.join(__dirname, '../test/data/test-data');
-const read = (dir: string, filepath: string): Buffer =>
-  fs.readFileSync(path.join(dir, filepath));
+const read = (dir: string, filepath: string): Uint8Array =>
+  new Uint8Array(fs.readFileSync(path.join(dir, filepath)));
 
 describe('findAddressInTree()', () => {
   it('should work for most basic case', () => {

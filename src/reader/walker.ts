@@ -1,3 +1,5 @@
+import { readUint, readUint32 } from '../bytes';
+
 type NodeReader = (offset: number) => number;
 
 export interface Walker {
@@ -6,36 +8,36 @@ export interface Walker {
 }
 
 const readNodeRight24 =
-  (db: Buffer): NodeReader =>
+  (db: Uint8Array): NodeReader =>
   (offset: number): number =>
-    db.readUIntBE(offset + 3, 3);
+    readUint(db, offset + 3, 3);
 
 const readNodeLeft24 =
-  (db: Buffer): NodeReader =>
+  (db: Uint8Array): NodeReader =>
   (offset: number): number =>
-    db.readUIntBE(offset, 3);
+    readUint(db, offset, 3);
 
 const readNodeLeft28 =
-  (db: Buffer): NodeReader =>
+  (db: Uint8Array): NodeReader =>
   (offset: number): number =>
-    ((db[offset + 3] & 0xf0) << 20) | db.readUIntBE(offset, 3);
+    ((db[offset + 3] & 0xf0) << 20) | readUint(db, offset, 3);
 
 const readNodeRight28 =
-  (db: Buffer): NodeReader =>
+  (db: Uint8Array): NodeReader =>
   (offset: number): number =>
-    ((db[offset + 3] & 0x0f) << 24) | db.readUIntBE(offset + 4, 3);
+    ((db[offset + 3] & 0x0f) << 24) | readUint(db, offset + 4, 3);
 
 const readNodeLeft32 =
-  (db: Buffer): NodeReader =>
+  (db: Uint8Array): NodeReader =>
   (offset: number): number =>
-    db.readUInt32BE(offset);
+    readUint32(db, offset);
 
 const readNodeRight32 =
-  (db: Buffer): NodeReader =>
+  (db: Uint8Array): NodeReader =>
   (offset: number): number =>
-    db.readUInt32BE(offset + 4);
+    readUint32(db, offset + 4);
 
-export default (db: Buffer, recordSize: number): Walker => {
+export default (db: Uint8Array, recordSize: number): Walker => {
   switch (recordSize) {
     case 24:
       return { left: readNodeLeft24(db), right: readNodeRight24(db) };
