@@ -28,3 +28,18 @@ jobs:
     - run: npm test
     - run: npm run build
     - run: npm run test:imports
+
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: recursive
+    - name: Use Node.js 24.x
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+    - run: npm i
+    - run: npm run benchmark -- --iterations 500000 --min-throughput 80000
+

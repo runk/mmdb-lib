@@ -7,3 +7,4 @@ npm-debug.log
 lib
 package-lock.json
 local
+.vscode
