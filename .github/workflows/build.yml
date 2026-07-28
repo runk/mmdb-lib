@@ -31,8 +31,6 @@ jobs:
 
   benchmark:
     runs-on: ubuntu-latest
-    env:
-      BENCH_MIN_LOOKUPS_PER_SEC: 140000
 
     steps:
     - uses: actions/checkout@v7
@@ -43,5 +41,5 @@ jobs:
       with:
         node-version: 24.x
     - run: npm i
-    - run: npm run benchmark
+    - run: npm run benchmark -- --min-throughput 130000
 

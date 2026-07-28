@@ -25,35 +25,81 @@ const lookups = [
   '2a02:cf48:0000::',
 ];
 
-const warmupIterations = Number.parseInt(
-  process.env.BENCH_WARMUP || '5000',
-  10
-);
-const measuredIterations = Number.parseInt(
-  process.env.BENCH_ITERATIONS || '100000',
-  10
-);
-const minimumLookupsPerSecond = Number.parseInt(
-  process.env.BENCH_MIN_LOOKUPS_PER_SEC || '0',
-  10
-);
+const parseArgs = () => {
+  const args = process.argv.slice(2);
+  const options = {
+    warmup: 5000,
+    iterations: 100000,
+    minThroughput: 0,
+  };
+  const requireValue = (flagName, candidate) => {
+    if (candidate === undefined || candidate.startsWith('--')) {
+      throw new Error(`Missing value for benchmark argument: ${flagName}`);
+    }
 
-if (!Number.isFinite(warmupIterations) || warmupIterations <= 0) {
-  throw new Error(`Invalid BENCH_WARMUP value: ${process.env.BENCH_WARMUP}`);
-}
+    return candidate;
+  };
+  const parseIntegerArg = (flagName, value) => {
+    if (!/^-?\d+$/.test(value)) {
+      throw new Error(`Invalid ${flagName} value: ${value}`);
+    }
 
-if (!Number.isFinite(measuredIterations) || measuredIterations <= 0) {
-  throw new Error(
-    `Invalid BENCH_ITERATIONS value: ${process.env.BENCH_ITERATIONS}`
-  );
-}
+    return Number(value);
+  };
+  const parsePositiveIntegerArg = (flagName, value) => {
+    const parsed = parseIntegerArg(flagName, value);
 
-if (!Number.isFinite(minimumLookupsPerSecond) || minimumLookupsPerSecond < 0) {
-  throw new Error(
-    'Invalid BENCH_MIN_LOOKUPS_PER_SEC value: ' +
-      process.env.BENCH_MIN_LOOKUPS_PER_SEC
-  );
-}
+    if (parsed <= 0) {
+      throw new Error(`Invalid ${flagName} value: ${value}`);
+    }
+
+    return parsed;
+  };
+  const parseNonNegativeIntegerArg = (flagName, value) => {
+    const parsed = parseIntegerArg(flagName, value);
+
+    if (parsed < 0) {
+      throw new Error(`Invalid ${flagName} value: ${value}`);
+    }
+
+    return parsed;
+  };
+
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    const value = args[index + 1];
+
+    if (arg === '--warmup') {
+      options.warmup = parsePositiveIntegerArg(arg, requireValue(arg, value));
+      index++;
+      continue;
+    }
+
+    if (arg === '--iterations') {
+      options.iterations = parsePositiveIntegerArg(
+        arg,
+        requireValue(arg, value)
+      );
+      index++;
+      continue;
+    }
+
+    if (arg === '--min-throughput') {
+      options.minThroughput = parseNonNegativeIntegerArg(
+        arg,
+        requireValue(arg, value)
+      );
+      index++;
+      continue;
+    }
+
+    throw new Error(`Unknown benchmark argument: ${arg}`);
+  }
+
+  return options;
+};
+
+const args = parseArgs();
 
 const db = fs.readFileSync(databasePath);
 const reader = new Reader(db);
@@ -71,17 +117,17 @@ const runLookups = (iterations) => {
   return hits;
 };
 
-runLookups(warmupIterations);
+runLookups(args.warmup);
 
 const startedAt = performance.now();
-const hits = runLookups(measuredIterations);
+const hits = runLookups(args.iterations);
 const durationMs = performance.now() - startedAt;
-const lookupsPerSecond = Math.round((measuredIterations / durationMs) * 1000);
+const lookupsPerSecond = Math.round((args.iterations / durationMs) * 1000);
 
 console.log(`Database: ${path.relative(process.cwd(), databasePath)}`);
-console.log(`Warmup iterations: ${warmupIterations.toLocaleString('en-US')}`);
+console.log(`Warmup iterations: ${args.warmup.toLocaleString('en-US')}`);
 console.log(
-  `Measured iterations: ${measuredIterations.toLocaleString('en-US')}`
+  `Measured iterations: ${args.iterations.toLocaleString('en-US')}`
 );
 console.log(`Hits: ${hits.toLocaleString('en-US')}`);
 console.log(`Duration: ${durationMs.toFixed(2)} ms`);
@@ -90,14 +136,14 @@ console.log(
 );
 console.log(
   'Minimum throughput requirement: ' +
-    minimumLookupsPerSecond.toLocaleString('en-US') +
+    args.minThroughput.toLocaleString('en-US') +
     ' lookups/sec'
 );
 
-if (lookupsPerSecond < minimumLookupsPerSecond) {
+if (lookupsPerSecond < args.minThroughput) {
   throw new Error(
     'Benchmark throughput check failed: expected at least ' +
-      minimumLookupsPerSecond.toLocaleString('en-US') +
+      args.minThroughput.toLocaleString('en-US') +
       ' lookups/sec, got ' +
       lookupsPerSecond.toLocaleString('en-US')
   );
