@@ -77,3 +77,9 @@ Then you can run tests with:
 ```shell
 npm test
 ```
+
+For a quick lookup benchmark against the bundled test database, run:
+
+```shell
+npm run benchmark
+```

@@ -49,6 +49,7 @@
   "license": "MIT",
   "scripts": {
     "build": "rm -rf lib/* && tsc",
+    "benchmark": "npm run build && node scripts/benchmark.js",
     "typecheck": "tsc --noEmit",
     "test": "mocha",
     "test:imports": "node test/imports/commonjs.js && node test/imports/esm.mjs && ts-node test/imports/typescript.ts",
