@@ -56,7 +56,7 @@ export default class Decoder {
 
   constructor(db: Uint8Array, baseOffset = 0, cache: Cache = noCache) {
     utils.assert(Boolean(db), 'Database buffer is required');
-    this.db = new Uint8Array(db.buffer, db.byteOffset, db.byteLength);
+    this.db = db;
     this.baseOffset = baseOffset;
     this.cache = cache;
   }

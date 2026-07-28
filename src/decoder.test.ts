@@ -24,6 +24,22 @@ const toHex = (value: Uint8Array): string =>
   Array.from(value, (byte) => byte.toString(16).padStart(2, '0')).join('');
 
 describe('lib/decoder', () => {
+  describe('Buffer input', () => {
+    it('should accept Buffer instances, including views with a byte offset', () => {
+      const input = Buffer.from([
+        0xff, 0x68, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+      ]).subarray(1, 10);
+
+      assert.strictEqual(new Decoder(input).decode(0).value, 0.5);
+
+      const decodedBytes = new Decoder(Buffer.from([0x92, 0x2a, 0xff])).decode(
+        0
+      ).value;
+      assert(decodedBytes instanceof Uint8Array);
+      assert.deepStrictEqual(Array.from(decodedBytes), [0x2a, 0xff]);
+    });
+  });
+
   describe('decodeByType()', () => {
     const decoder: any = new Decoder(bytes([0x00, 0x00]));
     it('should fail for unknown type', () => {

@@ -26,7 +26,7 @@ export class Reader<T extends Response> {
         `mmdb-lib expects an instance of Uint8Array, got: ${typeof db}`
       );
     }
-    this.db = new Uint8Array(db.buffer, db.byteOffset, db.byteLength);
+    this.db = db;
     this.metadata = parseMetadata(this.db);
     this.decoder = new Decoder(
       this.db,
