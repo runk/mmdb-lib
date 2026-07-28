@@ -25,9 +25,16 @@ const lookups = [
   '2a02:cf48:0000::',
 ];
 
-const warmupIterations = Number.parseInt(process.env.BENCH_WARMUP || '5000', 10);
+const warmupIterations = Number.parseInt(
+  process.env.BENCH_WARMUP || '5000',
+  10
+);
 const measuredIterations = Number.parseInt(
   process.env.BENCH_ITERATIONS || '100000',
+  10
+);
+const minimumLookupsPerSecond = Number.parseInt(
+  process.env.BENCH_MIN_LOOKUPS_PER_SEC || '0',
   10
 );
 
@@ -38,6 +45,13 @@ if (!Number.isFinite(warmupIterations) || warmupIterations <= 0) {
 if (!Number.isFinite(measuredIterations) || measuredIterations <= 0) {
   throw new Error(
     `Invalid BENCH_ITERATIONS value: ${process.env.BENCH_ITERATIONS}`
+  );
+}
+
+if (!Number.isFinite(minimumLookupsPerSecond) || minimumLookupsPerSecond < 0) {
+  throw new Error(
+    'Invalid BENCH_MIN_LOOKUPS_PER_SEC value: ' +
+      process.env.BENCH_MIN_LOOKUPS_PER_SEC
   );
 }
 
@@ -66,7 +80,25 @@ const lookupsPerSecond = Math.round((measuredIterations / durationMs) * 1000);
 
 console.log(`Database: ${path.relative(process.cwd(), databasePath)}`);
 console.log(`Warmup iterations: ${warmupIterations.toLocaleString('en-US')}`);
-console.log(`Measured iterations: ${measuredIterations.toLocaleString('en-US')}`);
+console.log(
+  `Measured iterations: ${measuredIterations.toLocaleString('en-US')}`
+);
 console.log(`Hits: ${hits.toLocaleString('en-US')}`);
 console.log(`Duration: ${durationMs.toFixed(2)} ms`);
-console.log(`Throughput: ${lookupsPerSecond.toLocaleString('en-US')} lookups/sec`);
+console.log(
+  `Throughput: ${lookupsPerSecond.toLocaleString('en-US')} lookups/sec`
+);
+console.log(
+  'Minimum throughput requirement: ' +
+    minimumLookupsPerSecond.toLocaleString('en-US') +
+    ' lookups/sec'
+);
+
+if (lookupsPerSecond < minimumLookupsPerSecond) {
+  throw new Error(
+    'Benchmark throughput check failed: expected at least ' +
+      minimumLookupsPerSecond.toLocaleString('en-US') +
+      ' lookups/sec, got ' +
+      lookupsPerSecond.toLocaleString('en-US')
+  );
+}

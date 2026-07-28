@@ -31,6 +31,8 @@ jobs:
 
   benchmark:
     runs-on: ubuntu-latest
+    env:
+      BENCH_MIN_LOOKUPS_PER_SEC: 140000
 
     steps:
     - uses: actions/checkout@v7
