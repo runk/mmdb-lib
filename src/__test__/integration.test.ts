@@ -85,7 +85,7 @@ describe('mmdb lib', () => {
           value: {
             array: [],
             boolean: false,
-            bytes: Uint8Array.from([]),
+            bytes: Buffer.from([]),
             double: 0,
             float: 0,
             int32: 0,
@@ -110,7 +110,7 @@ describe('section: data', () => {
     assert.deepStrictEqual(geoIp.get('::1.1.1.1'), {
       array: [1, 2, 3],
       boolean: true,
-      bytes: Uint8Array.from([0, 0, 0, 42]),
+      bytes: Buffer.from([0, 0, 0, 42]),
       double: 42.123456,
       // It should be 1.1, but there's some issue with rounding in v8
       float: 1.100000023841858,
@@ -129,7 +129,7 @@ describe('section: data', () => {
     assert.deepStrictEqual(geoIp.get('::0.0.0.0'), {
       array: [],
       boolean: false,
-      bytes: Uint8Array.from([]),
+      bytes: Buffer.from([]),
       double: 0,
       float: 0,
       int32: 0,
@@ -207,7 +207,7 @@ describe('getWithPrefixLength', () => {
   const decoderRecord = {
     array: [1, 2, 3],
     boolean: true,
-    bytes: Uint8Array.from([0, 0, 0, 42]),
+    bytes: Buffer.from([0, 0, 0, 42]),
     double: 42.123456,
     float: 1.100000023841858,
     int32: -268435456,
