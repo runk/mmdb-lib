@@ -103,7 +103,7 @@ describe('lib/ip', () => {
     it('should work fine for IPv4', () => {
       assert.strictEqual(ip.validate('64.4.4.4'), true);
       assert.strictEqual(ip.validate('64.4.4.boom!'), false);
-      // @ts-ignore
+      // @ts-expect-error
       assert.strictEqual(ip.validate(undefined), false);
       assert.strictEqual(ip.validate('kraken'), false);
     });
