@@ -1,9 +1,21 @@
 import Decoder from './decoder';
 import utils from './utils';
 
-const METADATA_START_MARKER = Buffer.from(
-  'ABCDEF4D61784D696E642E636F6D',
-  'hex'
+const METADATA_START_MARKER = Uint8Array.of(
+  0xab,
+  0xcd,
+  0xef,
+  0x4d,
+  0x61,
+  0x78,
+  0x4d,
+  0x69,
+  0x6e,
+  0x64,
+  0x2e,
+  0x63,
+  0x6f,
+  0x6d
 );
 
 export interface Metadata {
@@ -21,7 +33,7 @@ export interface Metadata {
   readonly treeDepth: number;
 }
 
-export const parseMetadata = (db: Buffer): Metadata => {
+export const parseMetadata = (db: Uint8Array): Metadata => {
   const offset = findStart(db);
   const decoder = new Decoder(db, offset);
   const metadata = decoder.decode(offset).value;
@@ -56,7 +68,7 @@ export const parseMetadata = (db: Buffer): Metadata => {
   };
 };
 
-const findStart = (db: Buffer): number => {
+const findStart = (db: Uint8Array): number => {
   let found = 0;
   let fsize = db.length - 1;
   const mlen = METADATA_START_MARKER.length - 1;
@@ -67,14 +79,17 @@ const findStart = (db: Buffer): number => {
   return fsize + found;
 };
 
-export const isLegacyFormat = (db: Buffer): boolean => {
+export const isLegacyFormat = (db: Uint8Array): boolean => {
   const structureInfoMaxSize = 20;
 
   for (let i = 0; i < structureInfoMaxSize; i++) {
-    const delim = db.slice(db.length - 3 - i, db.length - i);
-
     // Look for [0xff, 0xff, 0xff] metadata delimiter
-    if (delim[0] === 255 && delim[1] === 255 && delim[2] === 255) {
+    const offset = db.length - 3 - i;
+    if (
+      db[offset] === 255 &&
+      db[offset + 1] === 255 &&
+      db[offset + 2] === 255
+    ) {
       return true;
     }
   }

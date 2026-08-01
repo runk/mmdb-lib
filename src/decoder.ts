@@ -1,12 +1,10 @@
-import utils from './utils';
 import { Cache } from './types';
+import utils from './utils';
 
 utils.assert(
   typeof BigInt !== 'undefined',
   'Apparently you are using old version of node. Please upgrade to node 10.4.x or above.'
 );
-
-const MAX_INT_32 = 2_147_483_647;
 
 enum DataType {
   Extended = 0,
@@ -28,6 +26,7 @@ enum DataType {
 }
 
 const pointerValueOffset = [0, 2048, 526336, 0];
+const utf8Decoder = new TextDecoder();
 
 interface Cursor {
   value: any;
@@ -43,13 +42,15 @@ const cursor = (value: any, offset: number): Cursor => ({ value, offset });
 
 export default class Decoder {
   public telemetry: Record<string, any> = {};
-  private db: Buffer;
+  private db: Uint8Array;
+  private view: DataView;
   private baseOffset: number;
   private cache: Cache;
 
-  constructor(db: Buffer, baseOffset = 0, cache: Cache = noCache) {
+  constructor(db: Uint8Array, baseOffset = 0, cache: Cache = noCache) {
     utils.assert(Boolean(db), 'Database buffer is required');
     this.db = db;
+    this.view = new DataView(db.buffer, db.byteOffset, db.byteLength);
     this.baseOffset = baseOffset;
     this.cache = cache;
   }
@@ -165,16 +166,16 @@ export default class Decoder {
     // If the value is 30, then the size is 285 + *the next two bytes after the type
     // specifying bytes as a single unsigned integer*.
     if (size === 30) {
-      return cursor(285 + this.db.readUInt16BE(offset), offset + 2);
+      return cursor(285 + this.readUint16(offset), offset + 2);
     }
 
     // At this point `size` is always 31.
     // If the value is 31, then the size is 65,821 + *the next three bytes after the
     // type specifying bytes as a single unsigned integer*.
-    return cursor(65821 + this.db.readUIntBE(offset, 3), offset + 3);
+    return cursor(65821 + this.readUint(offset, 3), offset + 3);
   }
 
-  private decodeBytes(offset: number, size: number): Buffer {
+  private decodeBytes(offset: number, size: number): Uint8Array {
     return this.db.subarray(offset, offset + size);
   }
 
@@ -200,19 +201,19 @@ export default class Decoder {
       // If the size is 1, the pointer is built by appending the next two bytes to the
       // last three bits to produce a 19-bit value + 2048.
     } else if (pointerSize === 1) {
-      packed = ((ctrlByte & 7) << 16) | this.db.readUInt16BE(offset);
+      packed = ((ctrlByte & 7) << 16) | this.readUint16(offset);
 
       // If the size is 2, the pointer is built by appending the next three bytes to the
       // last three bits to produce a 27-bit value + 526336.
     } else if (pointerSize === 2) {
-      packed = ((ctrlByte & 7) << 24) | this.db.readUIntBE(offset, 3);
+      packed = ((ctrlByte & 7) << 24) | this.readUint(offset, 3);
 
       // At next point `size` is always 3.
       // Finally, if the size is 3, the pointer's value is contained in the next four
       // bytes as a 32-bit value. In this case, the last three bits of the control byte
       // are ignored.
     } else {
-      packed = this.db.readUInt32BE(offset);
+      packed = this.readUint32(offset);
     }
 
     offset += pointerSize + 1;
@@ -237,11 +238,11 @@ export default class Decoder {
   }
 
   private decodeDouble(offset: number) {
-    return this.db.readDoubleBE(offset);
+    return this.readFloat64(offset);
   }
 
   private decodeFloat(offset: number) {
-    return this.db.readFloatBE(offset);
+    return this.readFloat32(offset);
   }
 
   private decodeMap(size: number, offset: number) {
@@ -266,9 +267,9 @@ export default class Decoder {
       return 0;
     }
     if (size < 4) {
-      return this.db.readUIntBE(offset, size);
+      return this.readUint(offset, size);
     }
-    return this.db.readInt32BE(offset);
+    return this.readInt32(offset);
   }
 
   private decodeUint(offset: number, size: number): number {
@@ -276,7 +277,7 @@ export default class Decoder {
       return 0;
     }
     if (size <= 4) {
-      return this.db.readUIntBE(offset, size);
+      return this.readUint(offset, size);
     }
 
     throw new Error(`Invalid size for unsigned integer: ${size}`);
@@ -284,9 +285,7 @@ export default class Decoder {
 
   private decodeString(offset: number, size: number) {
     const newOffset = offset + size;
-    return newOffset >= MAX_INT_32
-      ? this.db.subarray(offset, newOffset).toString('utf8')
-      : this.db.toString('utf8', offset, newOffset);
+    return utf8Decoder.decode(this.db.subarray(offset, newOffset));
   }
 
   private decodeBigUint(offset: number, size: number): bigint {
@@ -297,8 +296,47 @@ export default class Decoder {
     let integer = 0n;
     for (let i = 0; i < size; i++) {
       integer <<= 8n;
-      integer |= BigInt(this.db.readUInt8(offset + i));
+      integer |= BigInt(this.db[offset + i]);
     }
     return integer;
+  }
+
+  private readUint(offset: number, size: number): number {
+    switch (size) {
+      case 1:
+        return this.db[offset];
+      case 2:
+        return this.readUint16(offset);
+      case 3:
+        return (
+          this.db[offset] * 0x10000 +
+          this.db[offset + 1] * 0x100 +
+          this.db[offset + 2]
+        );
+      case 4:
+        return this.readUint32(offset);
+      default:
+        throw new Error(`Invalid size for unsigned integer: ${size}`);
+    }
+  }
+
+  private readUint16(offset: number): number {
+    return this.view.getUint16(offset, false);
+  }
+
+  private readUint32(offset: number): number {
+    return this.view.getUint32(offset, false);
+  }
+
+  private readInt32(offset: number): number {
+    return this.view.getInt32(offset, false);
+  }
+
+  private readFloat32(offset: number): number {
+    return this.view.getFloat32(offset, false);
+  }
+
+  private readFloat64(offset: number): number {
+    return this.view.getFloat64(offset, false);
   }
 }

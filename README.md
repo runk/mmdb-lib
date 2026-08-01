@@ -39,11 +39,11 @@ Supported response types:
 
 ## Usage in browser-like environments
 
-Library expects to receive an instance of `Buffer` during instantiation of `Reader`. Since there is no direct alternative of node's `Buffer` in browser, you can use https://github.com/feross/buffer that mimics native `Buffer` interface. Neither `ArrayBuffer` nor `Uint8Array` is supported right now. Another requirement is [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) object available.
+Library expects a `Uint8Array` during instantiation of `Reader`, which is available in browsers without a polyfill. For example, use `new Uint8Array(await response.arrayBuffer())` after fetching a database. Node.js file reads also work because their return value is a `Uint8Array` subclass. Another requirement is [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt) object available.
 
 ## Options
 
-_Reader(db:Buffer, [options])_
+_Reader(db: Uint8Array, [options])_
 
 - `options`: `<Object>`
   - `cache`: `<Object>` Cache helper. [tiny-lru](https://github.com/avoidwork/tiny-lru) is great basic option. Only two methods expected: `get(key: string | number): any` and `set(key: string | number, val: any): void`.

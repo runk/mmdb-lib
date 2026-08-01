@@ -1,9 +1,47 @@
 import { strict as assert } from 'assert';
 import Decoder from './decoder';
 
+const encodeUtf8 = new TextEncoder();
+
+const bytes = (value: number[] | string): Uint8Array =>
+  typeof value === 'string' ? encodeUtf8.encode(value) : Uint8Array.from(value);
+
+const concatBytes = (...arrays: Uint8Array[]): Uint8Array => {
+  const result = new Uint8Array(
+    arrays.reduce((length, array) => length + array.length, 0)
+  );
+  let offset = 0;
+
+  for (const array of arrays) {
+    result.set(array, offset);
+    offset += array.length;
+  }
+
+  return result;
+};
+
+const toHex = (value: Uint8Array): string =>
+  Array.from(value, (byte) => byte.toString(16).padStart(2, '0')).join('');
+
 describe('lib/decoder', () => {
+  describe('Buffer input', () => {
+    it('should accept Buffer instances, including views with a byte offset', () => {
+      const input = Buffer.from([
+        0xff, 0x68, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
+      ]).subarray(1, 10);
+
+      assert.strictEqual(new Decoder(input).decode(0).value, 0.5);
+
+      const decodedBytes = new Decoder(Buffer.from([0x92, 0x2a, 0xff])).decode(
+        0
+      ).value;
+      assert(decodedBytes instanceof Uint8Array);
+      assert.deepStrictEqual(Array.from(decodedBytes), [0x2a, 0xff]);
+    });
+  });
+
   describe('decodeByType()', () => {
-    const decoder: any = new Decoder(Buffer.from([0x00, 0x00]));
+    const decoder: any = new Decoder(bytes([0x00, 0x00]));
     it('should fail for unknown type', () => {
       assert.throws(() => {
         // @ts-ignore
@@ -43,7 +81,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${tc.name} correctly`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -57,7 +95,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -71,12 +109,12 @@ describe('lib/decoder', () => {
 
   describe('decodeBytes()', () => {
     const testCases = [
-      { expected: Buffer.from(''), input: [0x90] },
-      { expected: Buffer.from('1'), input: [0x91, 0x31] },
-      { expected: Buffer.from('人'), input: [0x93, 0xe4, 0xba, 0xba] },
-      { expected: Buffer.from('123'), input: [0x93, 0x31, 0x32, 0x33] },
+      { expected: bytes(''), input: [0x90] },
+      { expected: bytes('1'), input: [0x91, 0x31] },
+      { expected: bytes('人'), input: [0x93, 0xe4, 0xba, 0xba] },
+      { expected: bytes('123'), input: [0x93, 0x31, 0x32, 0x33] },
       {
-        expected: Buffer.from('123456789012345678901234567'),
+        expected: bytes('123456789012345678901234567'),
         input: [
           0x9b, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
           0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31,
@@ -84,15 +122,15 @@ describe('lib/decoder', () => {
         ],
       },
       {
-        expected: Buffer.from('x'.repeat(500)),
+        expected: bytes('x'.repeat(500)),
         input: [0x9e, 0x01, 0xc1, ...Array(500).fill(0x78)],
       },
       {
-        expected: Buffer.from('x'.repeat(2000)),
+        expected: bytes('x'.repeat(2000)),
         input: [0x9e, 0x06, 0xb4, ...Array(2000).fill(0x78)],
       },
       {
-        expected: Buffer.from('x'.repeat(70000)),
+        expected: bytes('x'.repeat(70000)),
         input: [0x9f, 0x01, 0x10, 0x30, ...Array(70000).fill(0x78)],
       },
     ];
@@ -101,11 +139,11 @@ describe('lib/decoder', () => {
       const inputStr = formatInput(tc.input);
       const expectedStr =
         tc.expected.length > 50
-          ? `<Buffer ${tc.expected.toString('hex', 0, 20)}... (${tc.expected.length} bytes)>`
-          : `<Buffer ${tc.expected.toString('hex')}>`;
+          ? `<Uint8Array ${toHex(tc.expected.subarray(0, 20))}... (${tc.expected.length} bytes)>`
+          : `<Uint8Array ${toHex(tc.expected)}>`;
 
       it(`should decode ${inputStr} to ${expectedStr}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         const result = decoder.decode(0).value;
         assert.deepStrictEqual(result, tc.expected);
       });
@@ -147,7 +185,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input.slice(1))} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -183,7 +221,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input.slice(2))} to approx ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -207,7 +245,7 @@ describe('lib/decoder', () => {
 
     for (let tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -282,7 +320,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${tc.name} correctly`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -348,7 +386,7 @@ describe('lib/decoder', () => {
           : `'${tc.expected}'`;
 
       it(`should decode ${inputStr} to ${expectedStr}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -356,18 +394,18 @@ describe('lib/decoder', () => {
     const createBufferWithStringAtOffset = (
       offset: number,
       content: string
-    ): Buffer => {
-      const contentBuf = Buffer.from(content);
+    ): Uint8Array => {
+      const contentBuf = bytes(content);
       const size = contentBuf.length;
-      const padding = Buffer.alloc(offset);
+      const padding = new Uint8Array(offset);
 
-      let header: Buffer;
+      let header: Uint8Array;
       if (size <= 0x1f) {
-        header = Buffer.from([0x40 | size]);
+        header = bytes([0x40 | size]);
       } else if (size <= 0xffff) {
-        header = Buffer.from([0x40 | 0x1f, (size >> 8) & 0xff, size & 0xff]);
+        header = bytes([0x40 | 0x1f, (size >> 8) & 0xff, size & 0xff]);
       } else {
-        header = Buffer.from([
+        header = bytes([
           0x5f,
           (size >> 24) & 0xff,
           (size >> 16) & 0xff,
@@ -376,7 +414,7 @@ describe('lib/decoder', () => {
         ]);
       }
 
-      return Buffer.concat([padding, header, contentBuf]);
+      return concatBytes(padding, header, contentBuf);
     };
 
     const MAX_INT_32 = 2147483648;
@@ -441,7 +479,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -460,7 +498,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         assert.deepStrictEqual(decoder.decode(0).value, tc.expected);
       });
     }
@@ -492,7 +530,7 @@ describe('lib/decoder', () => {
 
     for (const tc of testCases) {
       it(`should decode ${JSON.stringify(tc.input)} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         const result = decoder.decode(0).value;
         assert.deepStrictEqual(result, tc.expected);
       });
@@ -506,7 +544,7 @@ describe('lib/decoder', () => {
       const inputStr = formatInput(tc.input);
 
       it(`should decode ${inputStr} to ${tc.expected}`, () => {
-        const decoder = new Decoder(Buffer.from(tc.input));
+        const decoder = new Decoder(bytes(tc.input));
         const result = decoder.decode(0).value;
         assert.deepStrictEqual(result, tc.expected);
       });
@@ -515,7 +553,7 @@ describe('lib/decoder', () => {
 
   describe('decode()', () => {
     it('should throw when extended type has wrong size', () => {
-      const test = new Decoder(Buffer.from([0x00, 0x00]));
+      const test = new Decoder(bytes([0x00, 0x00]));
       assert.throws(() => {
         test.decode(0);
       }, /Invalid Extended Type at offset 1 val 7/);
@@ -523,7 +561,7 @@ describe('lib/decoder', () => {
   });
 
   describe('sizeFromCtrlByte()', () => {
-    const decoder: any = new Decoder(Buffer.from([0x01, 0x02, 0x03, 0x04]));
+    const decoder: any = new Decoder(bytes([0x01, 0x02, 0x03, 0x04]));
 
     it('should return correct value (size <29)', () => {
       assert.deepStrictEqual(decoder.sizeFromCtrlByte(60, 0), {
@@ -555,7 +593,7 @@ describe('lib/decoder', () => {
   });
 
   describe('decodePointer()', () => {
-    const decoder: any = new Decoder(Buffer.from([0x01, 0x02, 0x03, 0x04]));
+    const decoder: any = new Decoder(bytes([0x01, 0x02, 0x03, 0x04]));
 
     it('should return correct value (pointer size = 0)', () => {
       assert.deepStrictEqual(decoder.decodePointer(39, 0), {

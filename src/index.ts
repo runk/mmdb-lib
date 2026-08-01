@@ -10,20 +10,20 @@ const DATA_SECTION_SEPARATOR_SIZE = 16;
 export class Reader<T extends Response> {
   public metadata: Metadata;
   private decoder: Decoder;
-  private db: Buffer;
+  private db: Uint8Array;
   private ipv4StartNodeNumber: number;
   private walker: Walker;
   private opts: ReaderOptions;
 
-  constructor(db: Buffer, opts: ReaderOptions = {}) {
+  constructor(db: Uint8Array, opts: ReaderOptions = {}) {
     this.opts = opts;
     this.load(db);
   }
 
-  public load(db: Buffer) {
-    if (!Buffer.isBuffer(db)) {
+  public load(db: Uint8Array) {
+    if (!(db instanceof Uint8Array)) {
       throw new Error(
-        `mmdb-lib expects an instance of Buffer, got: ${typeof db}`
+        `mmdb-lib expects an instance of Uint8Array, got: ${typeof db}`
       );
     }
     this.db = db;
