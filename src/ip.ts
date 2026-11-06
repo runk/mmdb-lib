@@ -77,7 +77,7 @@ const parse = (ip: string): number[] => {
   return ip.indexOf(':') === -1 ? parseIPv4(ip) : parseIPv6(ip);
 };
 
-const bitAt = (rawAddress: Buffer | number[], idx: number): number => {
+const bitAt = (rawAddress: Uint8Array | number[], idx: number): number => {
   // 8 bits per octet in the buffer (>>3 is slightly faster than Math.floor(idx/8))
   const bufIdx = idx >> 3;
 
