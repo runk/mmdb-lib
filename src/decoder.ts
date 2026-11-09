@@ -7,6 +7,9 @@ utils.assert(
 );
 
 const MAX_INT_32 = 2_147_483_647;
+const MAX_VALUES = 65_536;
+const MAX_DEPTH = 512;
+const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024;
 
 enum DataType {
   Extended = 0,
@@ -34,6 +37,11 @@ interface Cursor {
   offset: number;
 }
 
+interface DecodeBudget {
+  values: number;
+  payloadSize: number;
+}
+
 const noCache: Cache = {
   get: () => undefined,
   set: () => undefined,
@@ -55,13 +63,32 @@ export default class Decoder {
   }
 
   public decode(offset: number): Cursor {
+    return this.decodeValue(offset, { values: 0, payloadSize: 0 }, 0);
+  }
+
+  private decodeValue(
+    offset: number,
+    budget: DecodeBudget,
+    depth: number,
+    countValue = true
+  ): Cursor {
+    if (countValue && ++budget.values > MAX_VALUES) {
+      throw new Error('MaxMind DB decode limit exceeded: too many values');
+    }
+
     let tmp: any;
     const ctrlByte = this.db[offset++];
     let type = ctrlByte >> 5;
 
     if (type === DataType.Pointer) {
       tmp = this.decodePointer(ctrlByte, offset);
-      return cursor(this.decodeFast(tmp.value).value, tmp.offset);
+      if (this.db[tmp.value] >> 5 === DataType.Pointer) {
+        throw new Error('Invalid MaxMind DB pointer to pointer');
+      }
+      return cursor(
+        this.decodePointerValue(tmp.value, budget, depth).value,
+        tmp.offset
+      );
     }
 
     if (type === DataType.Extended) {
@@ -77,7 +104,7 @@ export default class Decoder {
     }
 
     const size = this.sizeFromCtrlByte(ctrlByte, offset);
-    return this.decodeByType(type, size.offset, size.value);
+    return this.decodeByType(type, size.offset, size.value, budget, depth);
   }
 
   public decodeFast(offset: number) {
@@ -91,7 +118,28 @@ export default class Decoder {
     return result;
   }
 
-  private decodeByType(type: DataType, offset: number, size: number): Cursor {
+  private decodePointerValue(
+    offset: number,
+    budget: DecodeBudget,
+    depth: number
+  ): Cursor {
+    const cached = this.cache.get(offset);
+    if (cached) {
+      return cached;
+    }
+
+    const result = this.decodeValue(offset, budget, depth, false);
+    this.cache.set(offset, result);
+    return result;
+  }
+
+  private decodeByType(
+    type: DataType,
+    offset: number,
+    size: number,
+    budget: DecodeBudget,
+    depth: number
+  ): Cursor {
     const newOffset = offset + size;
 
     // ipv4 types occurrence stats:
@@ -105,20 +153,22 @@ export default class Decoder {
     // 14 x boolean
     switch (type) {
       case DataType.Utf8String:
+        this.consumePayload(budget, size);
         return cursor(this.decodeString(offset, size), newOffset);
       case DataType.Map:
-        return this.decodeMap(size, offset);
+        return this.decodeMap(size, offset, budget, depth);
       case DataType.Uint32:
         return cursor(this.decodeUint(offset, size), newOffset);
       case DataType.Double:
         return cursor(this.decodeDouble(offset), newOffset);
       case DataType.Array:
-        return this.decodeArray(size, offset);
+        return this.decodeArray(size, offset, budget, depth);
       case DataType.Boolean:
         return cursor(this.decodeBoolean(size), offset);
       case DataType.Float:
         return cursor(this.decodeFloat(offset), newOffset);
       case DataType.Bytes:
+        this.consumePayload(budget, size);
         return cursor(this.decodeBytes(offset, size), newOffset);
       case DataType.Uint16:
         return cursor(this.decodeUint(offset, size), newOffset);
@@ -131,6 +181,15 @@ export default class Decoder {
     }
 
     throw new Error('Unknown type ' + type + ' at offset ' + offset);
+  }
+
+  private consumePayload(budget: DecodeBudget, size: number) {
+    budget.payloadSize += size;
+    if (budget.payloadSize > MAX_PAYLOAD_SIZE) {
+      throw new Error(
+        'MaxMind DB decode limit exceeded: string/byte payload is too large'
+      );
+    }
   }
 
   private sizeFromCtrlByte(ctrlByte: number, offset: number): Cursor {
@@ -219,12 +278,18 @@ export default class Decoder {
     return cursor(pointer + packed, offset);
   }
 
-  private decodeArray(size: number, offset: number): Cursor {
+  private decodeArray(
+    size: number,
+    offset: number,
+    budget: DecodeBudget,
+    depth: number
+  ): Cursor {
+    this.checkContainer(size, budget, depth);
     let tmp;
     const array = new Array(size);
 
     for (let i = 0; i < size; i++) {
-      tmp = this.decode(offset);
+      tmp = this.decodeValue(offset, budget, depth + 1);
       offset = tmp.offset;
       array[i] = tmp.value;
     }
@@ -244,21 +309,40 @@ export default class Decoder {
     return this.db.readFloatBE(offset);
   }
 
-  private decodeMap(size: number, offset: number) {
+  private decodeMap(
+    size: number,
+    offset: number,
+    budget: DecodeBudget,
+    depth: number
+  ) {
+    this.checkContainer(size * 2, budget, depth);
     let tmp;
     let key;
 
     const map: Record<string, any> = {};
 
     for (let i = 0; i < size; i++) {
-      tmp = this.decode(offset);
+      tmp = this.decodeValue(offset, budget, depth + 1);
       key = tmp.value;
-      tmp = this.decode(tmp.offset);
+      tmp = this.decodeValue(tmp.offset, budget, depth + 1);
       offset = tmp.offset;
       map[key] = tmp.value;
     }
 
     return cursor(map, offset);
+  }
+
+  private checkContainer(
+    childValues: number,
+    budget: DecodeBudget,
+    depth: number
+  ) {
+    if (depth >= MAX_DEPTH) {
+      throw new Error('MaxMind DB decode limit exceeded: nesting is too deep');
+    }
+    if (childValues > MAX_VALUES - budget.values) {
+      throw new Error('MaxMind DB decode limit exceeded: too many values');
+    }
   }
 
   private decodeInt32(offset: number, size: number) {

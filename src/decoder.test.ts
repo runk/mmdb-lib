@@ -520,6 +520,39 @@ describe('lib/decoder', () => {
         test.decode(0);
       }, /Invalid Extended Type at offset 1 val 7/);
     });
+
+    it('should reject a pointer to another pointer', () => {
+      const test = new Decoder(Buffer.from([0x20, 0x02, 0x20, 0x04, 0x40]));
+      assert.throws(() => test.decode(0), /pointer to pointer/);
+    });
+
+    it('should reject a container with too many values before allocating it', () => {
+      const size = 65_536;
+      const encodedSize = size - 285;
+      const input = Buffer.alloc(4);
+      input[0] = 0x1e;
+      input[1] = 0x04;
+      input.writeUInt16BE(encodedSize, 2);
+
+      assert.throws(() => new Decoder(input).decode(0), /too many values/);
+    });
+
+    it('should reject excessive nesting', () => {
+      const input = Buffer.from([
+        ...Array(513).fill([0x01, 0x04]).flat(),
+        0x40,
+      ]);
+      assert.throws(() => new Decoder(input).decode(0), /nesting is too deep/);
+    });
+
+    it('should reject excessive string payload before decoding it', () => {
+      const size = 2 * 1024 * 1024 + 1;
+      const input = Buffer.alloc(size + 4);
+      input[0] = 0x5f;
+      input.writeUIntBE(size - 65_821, 1, 3);
+
+      assert.throws(() => new Decoder(input).decode(0), /payload is too large/);
+    });
   });
 
   describe('sizeFromCtrlByte()', () => {

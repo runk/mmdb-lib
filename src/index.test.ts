@@ -1,4 +1,5 @@
 import assert from 'assert';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { Reader } from '.';
@@ -159,6 +160,41 @@ describe('findAddressInTree()', () => {
           read(path.join(__dirname, '../test/databases'), 'broken.dat')
         );
       }, /Cannot parse binary database/);
+    });
+
+    it('should reject an expansive record without exhausting the process', function () {
+      this.timeout(5000);
+
+      const fixture = path.join(
+        __dirname,
+        '../test/databases/issue-279-record-oom.mmdb'
+      );
+      const script = `
+        const fs = require('node:fs');
+        const { Reader } = require('./src');
+
+        try {
+          new Reader(fs.readFileSync(process.argv[1])).get('1.2.3.4');
+          process.exitCode = 2;
+        } catch (error) {
+          console.log('rejected: ' + error.message);
+        }
+      `;
+      const result = spawnSync(
+        process.execPath,
+        ['--max-old-space-size=32', '--import=tsx', '-e', script, fixture],
+        {
+          cwd: path.join(__dirname, '..'),
+          encoding: 'utf8',
+          timeout: 3000,
+        }
+      );
+
+      const diagnostic = result.error
+        ? result.error.message
+        : `status=${result.status}, signal=${result.signal}`;
+      assert.strictEqual(result.status, 0, diagnostic);
+      assert.match(result.stdout, /^rejected: /);
     });
   });
 });
